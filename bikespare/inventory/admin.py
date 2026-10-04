@@ -37,3 +37,36 @@ class EnquiryAdmin(admin.ModelAdmin):
     list_filter = ("is_handled", "created_at")
     search_fields = ("name", "phone", "part", "brand", "model")
     list_editable = ("is_handled",)
+    
+    
+from django.contrib import admin
+from .models import Service
+
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "order",
+        "is_active",
+        "created_at",
+    )
+
+    list_filter = (
+        "is_active",
+    )
+
+    search_fields = (
+        "title",
+        "description",
+    )
+
+    list_editable = (
+        "order",
+        "is_active",
+    )
+
+    ordering = (
+        "order",
+        "id",
+    )

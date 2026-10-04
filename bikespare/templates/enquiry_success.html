@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    Enquiry Submitted Successfully | Bike Spare Parts
+{% endblock %}
+
+{% block content %}
+
+<!-- ========================================================= -->
+<!-- SUCCESS CONFIRMATION SECTION -->
+<!-- ========================================================= -->
+<section class="py-24 sm:py-32 bg-white flex items-center justify-center min-h-[70vh]">
+    <div class="max-w-md mx-auto px-4 text-center">
+        
+        <!-- Success Icon Card -->
+        <div class="w-20 h-20 bg-black text-white rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl transition-transform hover:scale-105 duration-300">
+            <i class="fa-solid fa-check text-3xl"></i>
+        </div>
+
+        <!-- Heading -->
+        <p class="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-2">
+            Enquiry Received
+        </p>
+        <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-gray-900 leading-tight">
+            We've got your request.
+        </h1>
+
+        <!-- Description -->
+        <p class="mt-4 text-sm sm:text-base text-gray-500 leading-relaxed font-medium">
+            Thank you for reaching out. Our technical support desk will review your bike specifications and part requirements, then get back to you shortly.
+        </p>
+
+        <!-- Action Buttons -->
+        <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+                href="{% url 'parts:home' %}"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white px-7 py-3.5 rounded-xl text-sm font-bold shadow-lg transition-all hover:-translate-y-0.5"
+            >
+                <i class="fa-solid fa-house text-xs"></i> Back to Home
+            </a>
+            
+            <a
+                href="{% url 'parts:parts_list' %}"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-gray-200 hover:border-black bg-white text-gray-900 px-7 py-3.5 rounded-xl text-sm font-bold shadow-sm transition-all hover:-translate-y-0.5"
+            >
+                Browse Spare Parts <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </a>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

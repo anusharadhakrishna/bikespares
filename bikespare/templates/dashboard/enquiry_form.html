@@ -1,0 +1,129 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+{{ action }} Enquiry | AutoParts Admin
+{% endblock %}
+
+{% block page_heading %}
+{{ action }} Enquiry
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-3xl mx-auto">
+
+    <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+
+        <div class="p-6 border-b border-slate-200">
+
+            <div class="flex items-center gap-4">
+
+                <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20 flex items-center justify-center">
+                    <i class="fas fa-envelope"></i>
+                </div>
+
+                <div>
+
+                    <p class="text-xs uppercase tracking-wider text-amber-600 font-black">
+                        Customer Enquiry
+                    </p>
+
+                    <h2 class="text-xl font-black text-slate-900">
+                        {{ action }} Enquiry
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <form method="POST" class="p-6 space-y-6">
+
+            {% csrf_token %}
+
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                {% for field in form %}
+
+                    {% if field.name != "message" and field.name != "is_handled" %}
+
+                    <div>
+
+                        <label class="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">
+                            {{ field.label }}
+                        </label>
+
+                        {{ field }}
+
+                        {% if field.errors %}
+                            <p class="mt-2 text-xs text-rose-600">
+                                {{ field.errors }}
+                            </p>
+                        {% endif %}
+
+                    </div>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+
+            <div>
+
+                <label class="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">
+                    Message
+                </label>
+
+                {{ form.message }}
+
+                {% if form.message.errors %}
+                    <p class="mt-2 text-xs text-rose-600">
+                        {{ form.message.errors }}
+                    </p>
+                {% endif %}
+
+            </div>
+
+
+            <label class="flex items-center gap-3 cursor-pointer select-none">
+
+                {{ form.is_handled }}
+
+                <span class="text-sm text-slate-700 font-medium">
+                    Mark this enquiry as handled
+                </span>
+
+            </label>
+
+
+            <div class="flex gap-3 pt-3">
+
+                <a
+                    href="{% url 'dashboard:enquiry_list' %}"
+                    class="flex-1 text-center px-5 py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-300 shadow-sm transition"
+                >
+                    Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    class="flex-1 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shadow-sm transition"
+                >
+                    <i class="fas fa-save mr-2"></i>
+                    {{ action }} Enquiry
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

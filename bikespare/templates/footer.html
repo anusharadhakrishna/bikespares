@@ -1,0 +1,115 @@
+{% load static %}
+<footer class="bg-[#0b0f12] text-gray-400 border-t border-gray-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+        
+        <!-- Main Footer Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+
+            <!-- ABOUT COLUMN -->
+            <div class="space-y-4">
+                <a href="{% url 'parts:home' %}" class="inline-flex items-center" aria-label="Home page">
+                    <img
+                        src="{% static 'images/footer_log_1.png' %}"
+                        alt="Bike Spare Parts"
+                        class="w-[110px] h-auto object-contain brightness-0 invert"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';"
+                    >
+                    {% comment %} <span class="hidden items-center bg-white text-black text-xl font-black px-3 py-1 rounded-lg">
+                        BP
+                    </span> {% endcomment %}
+                </a>
+
+                <p class="text-xs leading-relaxed text-gray-400 font-medium max-w-xs">
+                    Reliable replacement parts, trusted global brands, and precise fitment support. Built for every bike. Engineered for every ride.
+                </p>
+            </div>
+
+            <!-- EXPLORE COLUMN -->
+            <div class="space-y-4">
+                <h3 class="text-xs font-black uppercase tracking-[0.18em] text-white">
+                    Explore
+                </h3>
+                <ul class="space-y-3 text-xs font-medium">
+                    <li>
+                        <a href="{% url 'parts:home' %}#about" class="hover:text-white transition-colors">
+                            About Us
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'parts:parts_list' %}" class="hover:text-white transition-colors">
+                            Spare Parts Catalog
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'parts:home' %}#brands" class="hover:text-white transition-colors">
+                            Our Brands
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'parts:home' %}#services" class="hover:text-white transition-colors">
+                            Services & Support
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- CATEGORIES COLUMN -->
+            <div class="space-y-4">
+                <h3 class="text-xs font-black uppercase tracking-[0.18em] text-white">
+                    Popular Categories
+                </h3>
+                <ul class="space-y-3 text-xs font-medium">
+                    {% for category in categories|slice:":5" %}
+                        <li>
+                            <a href="{% url 'parts:parts_list' %}?category={{ category.slug }}" class="hover:text-white transition-colors">
+                                {{ category.name }}
+                            </a>
+                        </li>
+                    {% empty %}
+                        <li class="text-gray-500">
+                            No categories added yet.
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- CONTACT COLUMN -->
+            <div class="space-y-4">
+                <h3 class="text-xs font-black uppercase tracking-[0.18em] text-white">
+                    Get In Touch
+                </h3>
+                <ul class="space-y-3 text-xs font-medium text-gray-300">
+                    <li class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-phone text-gray-500 text-[10px]"></i> +91 00000 00000
+                    </li>
+                    <li class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-envelope text-gray-500 text-[10px]"></i> parts@example.com
+                    </li>
+                    <li class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-clock text-gray-500 text-[10px]"></i> Mon–Sat, 9:00 AM–7:00 PM
+                    </li>
+                    {% comment %} <li class="pt-2">
+                        <a
+                            href="{% url 'parts:home' %}#contact"
+                            class="inline-flex items-center gap-2 bg-white text-black hover:bg-gray-200 px-4 py-2.5 rounded-xl text-xs font-black transition-all shadow-md"
+                        >
+                            Send an enquiry <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </a>
+                    </li> {% endcomment %}
+                </ul>
+            </div>
+
+        </div>
+
+        <!-- BOTTOM COPYRIGHT BAR -->
+        <div class="mt-16 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-medium text-gray-500">
+            <span>
+                &copy; 2026 Bike Spare Parts. All rights reserved.
+            </span>
+            <span class="text-gray-400">
+                Trusted parts &middot; Better journeys ahead.
+            </span>
+        </div>
+
+    </div>
+</footer>

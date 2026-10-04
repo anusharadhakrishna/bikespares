@@ -1,9 +1,9 @@
 from django.urls import path
+
 from . import views
 
 
 app_name = "parts"
-
 
 urlpatterns = [
 
@@ -15,9 +15,17 @@ urlpatterns = [
 
     path(
         "parts/",
-        views.home,
+        views.parts_list,
         name="parts_list"
     ),
+
+    path(
+        "search-suggestions/",
+        views.search_suggestions,
+        name="search_suggestions"
+    ),
+
+
 
     path(
         "parts/<str:part_number>/",

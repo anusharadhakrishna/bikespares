@@ -20,4 +20,14 @@ from django.urls import path,include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("" , include("inventory.urls")),
+    
+    # path("sparepartsadmin/" , include("sparepartsAdmin.urls")),
+    
+    path(
+        "admin-dashboard/",
+        include(
+            "sparepartsAdmin.urls",
+            namespace="dashboard"
+        )
+    ),
 ]

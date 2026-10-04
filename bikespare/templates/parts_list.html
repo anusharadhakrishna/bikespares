@@ -1,0 +1,1402 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if search_q %}“{{ search_q }}” — {% endif %}
+    Spare Parts | Bike Spare Parts
+{% endblock %}
+
+{% block meta_description %}
+    Browse motorcycle and scooter spare parts. Filter by brand, category and search by part name or number.
+{% endblock %}
+
+{% block content %}
+
+<!-- =========================================================
+     MOBILE SEARCH & FILTER BAR
+========================================================= -->
+<div class="md:hidden sticky top-[72px] z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 py-3 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+        <form method="GET" action="{% url 'parts:parts_list' %}" class="flex gap-2.5" id="mobileSearchForm">
+            <div class="relative flex-1">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                    <i class="fa-solid fa-search text-xs"></i>
+                </span>
+                <input
+                    type="search"
+                    name="q"
+                    value="{{ search_q }}"
+                    placeholder="Search parts, numbers..."
+                    class="w-full h-11 pl-9 pr-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder-gray-400 outline-none focus:bg-white focus:border-[#df3039] focus:ring-4 focus:ring-red-50 transition-all"
+                >
+            </div>
+
+            {% if selected_brand %}
+                <input type="hidden" name="brand" value="{{ selected_brand }}">
+            {% endif %}
+            {% if selected_category %}
+                <input type="hidden" name="category" value="{{ selected_category }}">
+            {% endif %}
+
+            <button
+                type="submit"
+                class="h-11 px-4 bg-[#df3039] hover:bg-[#bc2029] active:scale-95 text-white rounded-xl flex items-center justify-center transition-all shadow-sm shadow-red-500/20"
+                aria-label="Submit Search"
+            >
+                <i class="fa-solid fa-arrow-right text-sm"></i>
+            </button>
+
+            <button
+                type="button"
+                id="openFilters"
+                class="h-11 px-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-xs font-bold text-gray-700 flex items-center gap-1.5 transition-all"
+            >
+                <i class="fa-solid fa-sliders text-[11px] text-[#df3039]"></i>
+                Filters
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- =========================================================
+     PAGE HERO HEADER
+========================================================= -->
+<section class="relative bg-gradient-to-b from-gray-50 to-white border-b border-gray-100 py-4 md:py-8 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+                <!-- Breadcrumb -->
+                <nav class="flex items-center gap-2 text-xs font-semibold text-gray-400 mb-3">
+                    <a href="{% url 'parts:home' %}" class="hover:text-[#df3039] transition-colors">Home</a>
+                    <span class="text-gray-300">/</span>
+                    <span class="text-gray-700">Spare Parts Directory</span>
+                </nav>
+
+                <h1 class="text-xl  lg:text-3xl font-black tracking-tight text-gray-950">
+                    {% if search_q %}
+                        Results for <span class="text-[#df3039]">“{{ search_q }}”</span>
+                    {% elif selected_brand or selected_category %}
+                        Filtered <span class="text-[#df3039]">Spare Parts</span>
+                    {% else %}
+                        All <span class="text-[#df3039]">Spare Parts</span>
+                    {% endif %}
+                </h1>
+
+                {% comment %} <p class="mt-3 max-w-xl text-sm sm:text-base text-gray-500 leading-relaxed">
+                    Explore high-grade motorcycle and scooter replacements. Filter by brand or category, and confirm exact model fitment prior to order.
+                </p> {% endcomment %}
+            </div>
+
+            <!-- Quick stats pill -->
+            {% comment %} <div class="inline-flex items-center gap-3 bg-white border border-gray-200/80 px-4 py-3 rounded-2xl shadow-xs self-start md:self-auto">
+                <div class="w-10 h-10 rounded-xl bg-red-50 text-[#df3039] flex items-center justify-center font-black">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </div>
+                <div>
+                    <span class="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Catalog Availability</span>
+                    <span class="text-sm font-black text-gray-900">{{ total_found }} item{% if total_found != 1 %}s{% endif %} ready</span>
+                </div>
+            </div> {% endcomment %}
+        </div>
+    </div>
+</section>
+
+<!-- =========================================================
+     MAIN LISTING CONTAINER
+========================================================= -->
+<section class="bg-white py-4 lg:py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-[280px_1fr] gap-8 items-start">
+
+            <!-- =================================================
+                 FILTER SIDEBAR
+            ================================================= -->
+            <aside
+                id="filtersPanel"
+                class="fixed md:sticky md:top-24 inset-0 md:inset-auto z-[60] md:z-auto hidden md:block bg-white md:border border-gray-200/80 md:rounded-3xl p-6 md:shadow-xl md:shadow-black/[0.03] overflow-y-auto md:max-h-[calc(100vh-120px)] transition-all"
+            >
+                <!-- Mobile Close Button -->
+                <button
+                    type="button"
+                    id="closeFilters"
+                    class="md:hidden absolute top-5 right-5 w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-700 transition-colors"
+                >
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+
+                <!-- Sidebar Heading -->
+                <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-xs font-black uppercase tracking-widest text-gray-900">
+                            Refine Filters
+                        </h2>
+                        <span class="text-[11px] font-medium text-gray-400 mt-0.5 block">
+                            {{ total_found }} matching items
+                        </span>
+                    </div>
+                </div>
+
+                <!-- ACTIVE FILTER CHIPS -->
+                {% if search_q or selected_brand or selected_category %}
+                    <div class="flex flex-wrap gap-1.5 mb-6 p-3 bg-red-50/50 border border-red-100 rounded-2xl">
+                        <div class="w-full text-[10px] font-extrabold uppercase tracking-wider text-[#df3039] mb-1">Active Filters:</div>
+                        
+                        {% if search_q %}
+                            <span class="inline-flex items-center gap-1.5 bg-white border border-red-200 text-gray-800 text-xs font-semibold px-2.5 py-1 rounded-lg shadow-2xs">
+                                “{{ search_q }}”
+                                <a href="?{% if selected_brand %}brand={{ selected_brand }}&{% endif %}{% if selected_category %}category={{ selected_category }}{% endif %}" class="text-gray-400 hover:text-[#df3039] font-bold ml-0.5">×</a>
+                            </span>
+                        {% endif %}
+
+                        {% if selected_brand %}
+                            <span class="inline-flex items-center gap-1.5 bg-white border border-red-200 text-gray-800 text-xs font-semibold px-2.5 py-1 rounded-lg shadow-2xs">
+                                Brand filter
+                                <a href="?{% if search_q %}q={{ search_q }}&{% endif %}{% if selected_category %}category={{ selected_category }}{% endif %}" class="text-gray-400 hover:text-[#df3039] font-bold ml-0.5">×</a>
+                            </span>
+                        {% endif %}
+
+                        {% if selected_category %}
+                            <span class="inline-flex items-center gap-1.5 bg-white border border-red-200 text-gray-800 text-xs font-semibold px-2.5 py-1 rounded-lg shadow-2xs">
+                                Category filter
+                                <a href="?{% if search_q %}q={{ search_q }}&{% endif %}{% if selected_brand %}brand={{ selected_brand }}{% endif %}" class="text-gray-400 hover:text-[#df3039] font-bold ml-0.5">×</a>
+                            </span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <!-- FILTER FORM -->
+                <form method="GET" action="{% url 'parts:parts_list' %}" id="filterForm">
+                    
+                    <!-- SEARCH INPUT -->
+                    <div class="mb-5">
+                        <label for="listSearch" class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
+                            Part keyword
+                        </label>
+                        <div class="relative">
+                            <input
+                                type="search"
+                                name="q"
+                                id="listSearch"
+                                value="{{ search_q }}"
+                                placeholder="Name, part #, model..."
+                                autocomplete="off"
+                                class="w-full h-11 pl-3.5 pr-10 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 placeholder-gray-400 outline-none focus:bg-white focus:border-[#df3039] focus:ring-4 focus:ring-red-50 transition-all"
+                            >
+                            <button
+                                type="button"
+                                id="listVoiceBtn"
+                                class="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#171c22] hover:bg-[#df3039] text-white rounded-lg flex items-center justify-center transition-colors shadow-xs"
+                                title="Voice search"
+                            >
+                                <span id="listMicIcon" class="text-xs">
+                                    <i class="fa-solid fa-microphone"></i>
+                                </span>
+                            </button>
+                        </div>
+                        <small id="listVoiceStatus" class="block mt-1.5 text-[11px] font-medium text-gray-400 min-h-[16px]"></small>
+                    </div>
+
+                    <!-- BRAND SELECTOR -->
+                    <div class="mb-5">
+                        <label for="listBrand" class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
+                            Vehicle Brand
+                        </label>
+                        <div class="relative">
+                            <select
+                                name="brand"
+                                id="listBrand"
+                                class="w-full h-11 px-3.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-none focus:bg-white focus:border-[#df3039] focus:ring-4 focus:ring-red-50 transition-all appearance-none cursor-pointer"
+                            >
+                                <option value="">All brands available</option>
+                                {% for brand in brands %}
+                                    <option value="{{ brand.slug }}" {% if selected_brand == brand.slug %}selected{% endif %}>
+                                        {{ brand.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- CATEGORY SELECTOR -->
+                    <div class="mb-6">
+                        <label for="listCategory" class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
+                            System Category
+                        </label>
+                        <div class="relative">
+                            <select
+                                name="category"
+                                id="listCategory"
+                                class="w-full h-11 px-3.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-none focus:bg-white focus:border-[#df3039] focus:ring-4 focus:ring-red-50 transition-all appearance-none cursor-pointer"
+                            >
+                                <option value="">All categories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- ACTION BUTTONS -->
+                    <div class="flex flex-col gap-2 pt-4 border-t border-gray-100">
+                        <button
+                            type="submit"
+                            class="w-full h-11 bg-[#df3039] hover:bg-[#bc2029] active:scale-[0.98] text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-red-500/20 flex items-center justify-center gap-2"
+                        >
+                            Apply Filters <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+
+                        <a
+                            href="{% url 'parts:parts_list' %}"
+                            class="w-full h-11 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-[#df3039] rounded-xl text-xs font-bold transition-all border border-gray-200/60"
+                        >
+                            Clear All Filters
+                        </a>
+                    </div>
+                </form>
+            </aside>
+
+            <!-- =================================================
+                 RESULTS LISTINGS GRID
+            ================================================= -->
+            <div>
+                <!-- Top sorting/result context bar -->
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-6 pb-4 border-b border-gray-100">
+                    <p class="text-xs text-gray-500 font-medium">
+                        Showing <strong class="text-gray-950 font-black">{{ total_found }}</strong> 
+                        {% if total_found == 1 %}match found{% else %}matches found{% endif %}
+                    </p>
+
+                    <a
+                        href="{% url 'parts:home' %}"
+                        class="inline-flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 hover:text-[#df3039] px-3.5 py-2 rounded-xl text-xs font-bold transition-all"
+                    >
+                        <i class="fa-solid fa-arrow-left text-[10px]"></i> Back to Home
+                    </a>
+                </div>
+
+                <!-- CARDS GRID -->
+                <div  id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {% for part in parts %}
+                        <article
+                            class="group bg-white border border-gray-200/80 hover:border-red-200 rounded-3xl overflow-hidden shadow-xs hover:shadow-xl hover:shadow-black/[0.04] transition-all duration-300 flex flex-col"
+                            data-part-number="{{ part.part_number }}"
+                            data-product-name="{{ part.name }}"
+                            data-brand="{{ part.brand.name }}"
+                        >
+                            <!-- PRODUCT VISUAL / ARTWORK -->
+                            {% comment %} <div class="relative h-44 bg-gradient-to-b from-gray-50 to-gray-100/60 border-b border-gray-100 flex items-center justify-center p-4">
+                                {% if part.is_featured %}
+                                    <span class="absolute left-3.5 top-3.5 text-[9px] font-black tracking-widest bg-gray-900 text-white px-2.5 py-1 rounded-md shadow-xs">
+                                        FEATURED
+                                    </span>
+                                {% endif %}
+
+                                <div class="w-14 h-14 rounded-2xl bg-white shadow-sm border border-gray-200/60 flex items-center justify-center text-gray-400 group-hover:text-[#df3039] group-hover:scale-105 transition-all duration-300">
+                                    <i class="fa-solid fa-gear text-2xl"></i>
+                                </div>
+
+                                <code class="absolute bottom-3 right-3 text-[11px] font-mono font-bold text-gray-500 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-gray-200/60 shadow-2xs">
+                                    {{ part.part_number }}
+                                </code>
+                            </div> {% endcomment %}
+
+
+<!-- =========================================================
+     PRODUCT VISUAL / ARTWORK
+========================================================= -->
+
+<div
+    class="relative
+           h-40
+           
+           bg-black-500
+           from-gray-50
+           via-gray-50
+           to-gray-100
+           border-b
+           border-gray-100
+           flex
+           items-center
+           justify-center
+           p-4
+           overflow-hidden"
+>
+
+    <!-- DISCOUNT BADGE -->
+
+    {% if part.discount > 0 %}
+
+        <div
+            class="absolute
+                   top-4
+                   right-4
+                   z-20
+                   w-[68px]
+                   h-[68px]
+                   rounded-full
+                   bg-[#df3039]
+                   text-white
+                   border-4
+                   border-white
+                   shadow-xl
+                   shadow-red-900/20
+                   flex
+                   flex-col
+                   items-center
+                   justify-center
+                   rotate-[5deg]"
+        >
+
+            <span
+                class="text-[8px]
+                       font-black
+                       uppercase
+                       tracking-wide
+                       leading-none"
+            >
+                SAVE
+            </span>
+
+            <strong
+                class="text-lg
+                       font-black
+                       leading-tight"
+            >
+                {{ part.discount|floatformat:0 }}%
+            </strong>
+
+            <span
+                class="text-[8px]
+                       font-black
+                       uppercase
+                       leading-none"
+            >
+                OFF
+            </span>
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- FEATURED BADGE -->
+
+    {% if part.is_featured %}
+
+        <span
+            class="absolute
+                   top-4
+                   left-4
+                   z-20
+                   px-2.5
+                   py-1.5
+                   rounded-lg
+                   bg-gray-900
+                   text-white
+                   text-[9px]
+                   font-black
+                   tracking-widest
+                   shadow-sm"
+        >
+            FEATURED
+        </span>
+
+    {% endif %}
+
+
+    <!-- PRODUCT ICON -->
+
+    {% comment %} <div
+        class="w-20
+               h-20
+               sm:w-24
+               sm:h-24
+               rounded-3xl
+               bg-white
+               border
+               border-gray-200
+               shadow-lg
+               flex
+               items-center
+               justify-center
+               text-gray-300
+               group-hover:text-[#df3039]
+               group-hover:scale-105
+               transition-all
+               duration-300"
+    >
+
+        <i
+            class="fa-solid
+                   fa-gear
+                   text-4xl
+                   sm:text-5xl"
+        ></i>
+
+    </div> {% endcomment %}
+
+    <!-- BIKE DUMMY IMAGE -->
+    <img
+        src="https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=900&q=85"
+        alt="{{ part.name }}"
+        class="h-full w-full object-cover
+               transition-transform duration-500
+               ease-out group-hover:scale-105"
+    />
+    <!-- PART NUMBER -->
+{% comment %} 
+    <div
+        class="absolute
+               bottom-4
+               left-1/2
+               -translate-x-1/2
+               bg-white/95
+               backdrop-blur-sm
+               border
+               border-gray-200
+               rounded-xl
+               px-4
+               py-2
+               shadow-sm
+               whitespace-nowrap"
+    >
+
+        <span
+            class="text-sm
+                   font-mono
+                   font-bold
+                   text-gray-700"
+        >
+            {{ part.part_number }}
+        </span>
+
+    </div> {% endcomment %}
+
+</div>
+
+
+
+
+                            <!-- CARD BODY -->
+                            <div class="p-5 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between gap-3 mb-2">
+                                        {% comment %} <span class="text-[10px] font-black uppercase tracking-wider text-[#df3039]">
+                                          SKU:  {{ part.part_number }} - {{ part.brand.name }}
+                                        </span> {% endcomment %}
+<span class="text-[10px] font-black uppercase tracking-wider text-slate-500">
+    SKU:
+    <span class="text-slate-800">{{ part.part_number }}</span>
+    <span class="text-slate-300 mx-1">•</span>
+    <span class="text-indigo-600">{{ part.brand.name }}</span>
+</span>
+                                        <button
+                                            type="button"
+                                            class="speak-product-btn w-8 h-8 rounded-xl bg-red-50 hover:bg-[#df3039] text-[#df3039] hover:text-white flex items-center justify-center transition-all shadow-2xs"
+                                            data-product-name="{{ part.name }}"
+                                            data-brand="{{ part.brand.name }}"
+                                            data-part-number="{{ part.part_number }}"
+                                            title="Listen to product number"
+                                        >
+                                            <i class="fa-solid fa-volume-high text-xs"></i>
+                                        </button>
+                                    </div>
+
+                                    <h3 class="text-base font-black text-gray-950 group-hover:text-[#df3039] transition-colors line-clamp-1">
+                                        {{ part.name }}
+                                    </h3>
+
+                                    <p class="mt-1.5 text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                                        {% if part.description %}
+                                            {{ part.description|truncatechars:85 }}
+                                        {% else %}
+                                            Reliable factory replacement part engineered for optimum durability.
+                                        {% endif %}
+                                    </p>
+
+                                    {% if part.compatible_with %}
+                                        <div class="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-gray-600 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                                            <i class="fa-solid fa-motorcycle text-[#df3039]"></i>
+                                            <span class="truncate max-w-[200px]">{{ part.compatible_with }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- CARD FOOTER -->
+                                {% comment %} <div class="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+                                    <div>
+                                        {% if part.quantity == 0 %}
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-red-600">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span> Out of stock
+                                            </span>
+                                        {% elif part.quantity <= 5 %}
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Low ({{ part.quantity }})
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> In stock
+                                            </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="flex items-center gap-3">
+                                
+                                        
+
+                                        <a
+                                            href="{{ part.get_absolute_url }}"
+                                            class="w-8 h-8 rounded-xl bg-gray-900 hover:bg-[#df3039] text-white flex items-center justify-center transition-all shadow-xs"
+                                            title="View Part Details"
+                                        >
+                                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                        </a>
+                                    </div>
+                                </div> {% endcomment %}
+
+
+
+                                <!-- =========================================================
+     CARD FOOTER
+========================================================= -->
+
+<div
+    class="mt-5
+           pt-5
+           border-t
+           border-gray-100"
+>
+
+
+    <!-- STOCK -->
+{% comment %} 
+    <div class="mb-4">
+
+        {% if part.quantity == 0 %}
+
+            <span
+                class="inline-flex
+                       items-center
+                       gap-1.5
+                       px-2.5
+                       py-1.5
+                       rounded-lg
+                       bg-red-50
+                       border
+                       border-red-100
+                       text-[10px]
+                       font-black
+                       text-red-600"
+            >
+
+                <span
+                    class="w-1.5
+                           h-1.5
+                           rounded-full
+                           bg-red-600"
+                ></span>
+
+                OUT OF STOCK
+
+            </span>
+
+
+        {% elif part.quantity <= 5 %}
+
+            <span
+                class="inline-flex
+                       items-center
+                       gap-1.5
+                       px-2.5
+                       py-1.5
+                       rounded-lg
+                       bg-amber-50
+                       border
+                       border-amber-100
+                       text-[10px]
+                       font-black
+                       text-amber-600"
+            >
+
+                <span
+                    class="w-1.5
+                           h-1.5
+                           rounded-full
+                           bg-amber-500"
+                ></span>
+
+                ONLY {{ part.quantity }} LEFT
+
+            </span>
+
+
+        {% else %}
+
+            <span
+                class="inline-flex
+                       items-center
+                       gap-1.5
+                       px-2.5
+                       py-1.5
+                       rounded-lg
+                       bg-emerald-50
+                       border
+                       border-emerald-100
+                       text-[10px]
+                       font-black
+                       text-emerald-600"
+            >
+
+                <span
+                    class="w-1.5
+                           h-1.5
+                           rounded-full
+                           bg-emerald-500"
+                ></span>
+
+                IN STOCK
+
+            </span>
+
+        {% endif %}
+
+    </div> {% endcomment %}
+
+
+
+    <!-- PRICE + DETAILS -->
+
+    <div
+        class="flex
+               items-end
+               justify-between
+               gap-4"
+    >
+
+
+        <!-- PRICE -->
+
+        <div class="min-w-0">
+
+            {% if part.discount > 0 %}
+
+
+                <!-- SELLING PRICE -->
+
+                <div
+                    class="md:text-xl
+                    text-md
+                           
+                           leading-none
+                           font-black
+                           tracking-tight
+                           text-gray-950"
+                >
+                    ₹{{ part.price|floatformat:2 }}
+                </div>
+
+
+                <!-- MRP + DISCOUNT -->
+
+                <div
+                    class="flex
+                           flex-wrap
+                           items-center
+                           gap-2
+                           mt-2"
+                >
+
+                    {% if part.mrp %}
+
+                        <span
+                            class="text-xs
+                                   sm:text-sm
+                                   text-gray-400
+                                   line-through
+                                   font-medium"
+                        >
+                             ₹{{ part.mrp|floatformat:2 }}
+                        </span>
+
+                    {% endif %}
+
+
+                    {% comment %} <span
+                        class="inline-flex
+                               items-center
+                               px-2
+                               py-1
+                               rounded-md
+                               bg-emerald-50
+                               border
+                               border-emerald-100
+                               text-[10px]
+                               font-black
+                               text-emerald-600"
+                    >
+                        {{ part.discount|floatformat:0 }}% OFF
+                    </span> {% endcomment %}
+
+                </div>
+
+
+            {% elif part.price %}
+
+
+                <!-- NORMAL PRICE -->
+
+                <div
+                    class="md:text-xl
+
+                          text-md
+                           
+                           leading-none
+                           font-black
+                           tracking-tight
+                           text-gray-950"
+                >
+                    ₹{{ part.price|floatformat:2 }}
+                </div>
+
+
+            {% else %}
+
+                <div
+                    class="text-sm
+                           font-bold
+                           text-gray-400"
+                >
+                    Price on request
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+
+        <!-- DETAILS BUTTON -->
+
+        <a
+            href="{{ part.get_absolute_url }}"
+            class="h-8
+                   px-2
+                   rounded-2xl
+                   bg-gray-50
+                   hover:bg-[#df3039]
+                   border
+                   border-gray-200
+                   hover:border-[#df3039]
+                   text-[#df3039]
+                   hover:text-white
+                   flex
+                   items-center
+                   justify-center
+                   gap-2
+                   text-sm
+                   font-black
+                   transition-all
+                   duration-200
+                   whitespace-nowrap
+                   group/details"
+        >
+
+            view
+
+            <i
+                class="fa-solid
+                       fa-arrow-right
+                       text-xs
+                       group-hover/details:translate-x-0.5
+                       transition-transform"
+            ></i>
+
+        </a>
+
+    </div>
+
+</div>
+                            </div>
+                        </article>
+
+
+                        
+                    {% empty %}
+                    
+
+
+                        <!-- EMPTY STATE -->
+                        <div class="sm:col-span-2 xl:col-span-3 bg-gray-50/60 border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center">
+                            <div class="w-16 h-16 mx-auto rounded-2xl bg-white shadow-xs border border-gray-200 flex items-center justify-center text-gray-400 mb-4">
+                                <i class="fa-solid fa-box-open text-2xl"></i>
+                            </div>
+
+                            <h3 class="text-lg font-black text-gray-900">
+                                No matching parts found
+                            </h3>
+
+                            <p class="mt-1 text-sm text-gray-500 max-w-sm mx-auto">
+                                We couldn't locate anything matching your criteria. Try adjusting your keyword search or filters.
+                            </p>
+
+                            <a
+                                href="{% url 'parts:parts_list' %}"
+                                class="inline-flex items-center justify-center mt-6 bg-[#df3039] hover:bg-[#bc2029] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm shadow-red-500/25"
+                            >
+                                Reset All Filters
+                            </a>
+                        </div>
+
+
+
+                        
+                    {% endfor %}
+                </div>
+
+                {% if page_obj.has_next %}
+
+<div
+    id="loadMoreContainer"
+    class="flex flex-col items-center justify-center mt-10"
+>
+
+    <button
+        type="button"
+        id="loadMoreBtn"
+        data-next-page="{{ page_obj.next_page_number }}"
+        class="inline-flex items-center justify-center gap-3
+               px-7 py-3.5
+               bg-gray-950
+               hover:bg-[#df3039]
+               text-white
+               rounded-2xl
+               text-sm
+               font-black
+               transition-all
+               duration-200
+               shadow-lg"
+    >
+
+        <span id="loadMoreText">
+            Load More Products
+        </span>
+
+        <i
+            id="loadMoreIcon"
+            class="fa-solid fa-arrow-down text-xs"
+        ></i>
+
+    </button>
+
+
+    <span
+        id="loadMoreCount"
+        class="mt-3 text-xs text-gray-400"
+    >
+        Showing {{ page_obj.end_index }}
+        of {{ paginator.count }} products
+    </span>
+
+</div>
+
+{% endif %}
+            </div>
+
+        </div>
+    </div>
+</section>
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const loadMoreBtn = document.getElementById(
+        "loadMoreBtn"
+    );
+
+    const productsGrid = document.getElementById(
+        "productsGrid"
+    );
+
+    const loadMoreContainer = document.getElementById(
+        "loadMoreContainer"
+    );
+
+    const loadMoreText = document.getElementById(
+        "loadMoreText"
+    );
+
+    const loadMoreIcon = document.getElementById(
+        "loadMoreIcon"
+    );
+
+    const loadMoreCount = document.getElementById(
+        "loadMoreCount"
+    );
+
+
+    if (!loadMoreBtn) {
+        return;
+    }
+
+
+    loadMoreBtn.addEventListener(
+        "click",
+        async function () {
+
+            const nextPage =
+                loadMoreBtn.dataset.nextPage;
+
+
+            if (!nextPage) {
+                return;
+            }
+
+
+            // -------------------------------
+            // Loading state
+            // -------------------------------
+
+            loadMoreBtn.disabled = true;
+
+            loadMoreText.textContent =
+                "Loading...";
+
+            loadMoreIcon.className =
+                "fa-solid fa-spinner fa-spin text-xs";
+
+
+            try {
+
+                const currentUrl =
+                    new URL(
+                        window.location.href
+                    );
+
+
+                currentUrl.searchParams.set(
+                    "page",
+                    nextPage
+                );
+
+
+                const response =
+                    await fetch(
+                        currentUrl.toString(),
+                        {
+                            headers: {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Unable to load products."
+                    );
+
+                }
+
+
+                const html =
+                    await response.text();
+
+
+                // --------------------------------
+                // Parse returned HTML
+                // --------------------------------
+
+                const parser =
+                    new DOMParser();
+
+                const doc =
+                    parser.parseFromString(
+                        html,
+                        "text/html"
+                    );
+
+
+                const newProducts =
+                    doc.querySelectorAll(
+                        "#productsGrid > article"
+                    );
+
+
+                // --------------------------------
+                // Add products
+                // --------------------------------
+
+                newProducts.forEach(
+                    function (product) {
+
+                        product.classList.add(
+                            "opacity-0",
+                            "translate-y-4"
+                        );
+
+                        productsGrid.appendChild(
+                            product
+                        );
+
+
+                        requestAnimationFrame(
+                            function () {
+
+                                product.classList.remove(
+                                    "opacity-0",
+                                    "translate-y-4"
+                                );
+
+                            }
+                        );
+
+                    }
+                );
+
+
+                // --------------------------------
+                // Find next page
+                // --------------------------------
+
+                const nextButton =
+                    doc.querySelector(
+                        "#loadMoreBtn"
+                    );
+
+
+                if (nextButton) {
+
+                    const nextNextPage =
+                        nextButton.dataset.nextPage;
+
+
+                    loadMoreBtn.dataset.nextPage =
+                        nextNextPage;
+
+
+                    const newCount =
+                        productsGrid.querySelectorAll(
+                            "article"
+                        ).length;
+
+
+                    loadMoreCount.textContent =
+                        `Showing ${Math.min(
+                            newCount,
+                            {{ paginator.count }}
+                        )} of {{ paginator.count }} products`;
+
+
+                    loadMoreBtn.disabled =
+                        false;
+
+                    loadMoreText.textContent =
+                        "Load More Products";
+
+                    loadMoreIcon.className =
+                        "fa-solid fa-arrow-down text-xs";
+
+                } else {
+
+                    // --------------------------
+                    // No more products
+                    // --------------------------
+
+                    loadMoreContainer.innerHTML = `
+
+                        <div
+                            class="flex flex-col
+                                   items-center
+                                   justify-center"
+                        >
+
+                            <div
+                                class="w-10 h-10
+                                       rounded-full
+                                       bg-emerald-50
+                                       text-emerald-600
+                                       flex items-center
+                                       justify-center"
+                            >
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+
+                            <p
+                                class="mt-3
+                                       text-sm
+                                       font-bold
+                                       text-gray-600"
+                            >
+                                All products loaded
+                            </p>
+
+                            <span
+                                class="mt-1
+                                       text-xs
+                                       text-gray-400"
+                            >
+                                {{ paginator.count }}
+                                products
+                            </span>
+
+                        </div>
+
+                    `;
+
+                }
+
+
+            } catch (error) {
+
+                console.error(
+                    error
+                );
+
+
+                loadMoreBtn.disabled =
+                    false;
+
+                loadMoreText.textContent =
+                    "Try Again";
+
+                loadMoreIcon.className =
+                    "fa-solid fa-rotate-right text-xs";
+
+            }
+
+        }
+    );
+
+});
+
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const voiceBtn = document.getElementById("listVoiceBtn");
+    const searchInput = document.getElementById("listSearch");
+    const voiceStatus = document.getElementById("listVoiceStatus");
+    const micIcon = document.getElementById("listMicIcon");
+    const filterForm = document.getElementById("filterForm");
+
+    if (!voiceBtn || !searchInput || !filterForm) {
+        return;
+    }
+
+    // -----------------------------------------
+    // Browser Speech Recognition
+    // -----------------------------------------
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+
+        voiceBtn.disabled = true;
+
+        if (voiceStatus) {
+            voiceStatus.textContent =
+                "Voice search is not supported in this browser.";
+        }
+
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = "en-IN";
+
+    recognition.continuous = false;
+
+    recognition.interimResults = false;
+
+    recognition.maxAlternatives = 1;
+
+
+    // -----------------------------------------
+    // Start Voice Search
+    // -----------------------------------------
+
+    voiceBtn.addEventListener("click", function () {
+
+        try {
+
+            recognition.start();
+
+            voiceBtn.classList.add(
+                "bg-[#df3039]",
+                "text-white"
+            );
+
+            voiceBtn.classList.remove(
+                "bg-[#171c22]"
+            );
+
+            if (micIcon) {
+                micIcon.innerHTML =
+                    '<i class="fa-solid fa-microphone-lines fa-beat"></i>';
+            }
+
+            if (voiceStatus) {
+                voiceStatus.textContent =
+                    "Listening... Speak now";
+            }
+
+        } catch (error) {
+
+            console.log("Speech recognition error:", error);
+
+        }
+
+    });
+
+
+    // -----------------------------------------
+    // Speech Result
+    // -----------------------------------------
+
+    recognition.addEventListener(
+        "result",
+        function (event) {
+
+            const transcript =
+                event.results[0][0].transcript
+                    .trim();
+
+            if (!transcript) {
+                return;
+            }
+
+            console.log(
+                "Voice search:",
+                transcript
+            );
+
+
+            // Put voice text into search box
+            searchInput.value = transcript;
+
+
+            if (voiceStatus) {
+                voiceStatus.textContent =
+                    `Searching for "${transcript}"...`;
+            }
+
+
+            // ---------------------------------
+            // IMPORTANT
+            // Submit the FILTER FORM
+            // ---------------------------------
+
+            setTimeout(function () {
+
+                filterForm.submit();
+
+            }, 300);
+
+        }
+    );
+
+
+    // -----------------------------------------
+    // Recognition Started
+    // -----------------------------------------
+
+    recognition.addEventListener(
+        "start",
+        function () {
+
+            console.log(
+                "Voice recognition started"
+            );
+
+        }
+    );
+
+
+    // -----------------------------------------
+    // Recognition Ended
+    // -----------------------------------------
+
+    recognition.addEventListener(
+        "end",
+        function () {
+
+            voiceBtn.classList.remove(
+                "bg-[#df3039]",
+                "text-white"
+            );
+
+            voiceBtn.classList.add(
+                "bg-[#171c22]"
+            );
+
+            if (micIcon) {
+
+                micIcon.innerHTML =
+                    '<i class="fa-solid fa-microphone"></i>';
+
+            }
+
+        }
+    );
+
+
+    // -----------------------------------------
+    // Recognition Error
+    // -----------------------------------------
+
+    recognition.addEventListener(
+        "error",
+        function (event) {
+
+            console.error(
+                "Speech recognition error:",
+                event.error
+            );
+
+
+            if (voiceStatus) {
+
+                if (
+                    event.error ===
+                    "not-allowed"
+                ) {
+
+                    voiceStatus.textContent =
+                        "Please allow microphone access.";
+
+                } else if (
+                    event.error ===
+                    "no-speech"
+                ) {
+
+                    voiceStatus.textContent =
+                        "No speech detected. Try again.";
+
+                } else {
+
+                    voiceStatus.textContent =
+                        "Voice search failed. Try again.";
+
+                }
+
+            }
+
+        }
+    );
+
+});
+</script>
+{% endblock %}

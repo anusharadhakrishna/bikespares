@@ -1,0 +1,382 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+    Dashboard | AutoParts Admin
+{% endblock %}
+
+{% block page_heading %}
+    Dashboard Overview
+{% endblock %}
+
+{% block content %}
+
+<div class="space-y-8">
+
+    <!-- =====================================================
+         WELCOME SECTION
+    ====================================================== -->
+    <section class="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-6 sm:p-10 shadow-sm">
+        <!-- Ambient Decorative Glows -->
+        <div class="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-amber-500/10 blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 -bottom-24 w-64 h-64 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none"></div>
+
+        <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div>
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 text-[10px] uppercase tracking-[0.2em] font-black shadow-inner">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    Admin Control Center
+                </div>
+
+                <h2 class="mt-4 text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                    Welcome back, <span class="text-amber-600">Administrator</span>
+                </h2>
+
+                <p class="mt-3 max-w-2xl text-sm sm:text-base leading-relaxed text-slate-600 font-medium">
+                    Monitor your inventory metrics, manage product lines, and stay responsive to incoming customer enquiries from a unified command center.
+                </p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="{% url 'dashboard:part_create' %}" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-black shadow-md shadow-amber-500/10 hover:shadow-amber-500/20 transition-all duration-200">
+                    <i class="fas fa-plus text-xs"></i>
+                    Add Spare Part
+                </a>
+
+                <a href="{% url 'dashboard:enquiry_list' %}" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-sm font-bold transition-all duration-200 shadow-sm">
+                    <i class="fas fa-envelope text-xs text-amber-600"></i>
+                    View Enquiries
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         STATISTICS GRID
+    ====================================================== -->
+    <section>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+
+            <!-- TOTAL PARTS -->
+            <div class="group bg-white border border-slate-200 rounded-2xl p-6 hover:border-slate-300 hover:shadow-md transition-all duration-200 shadow-sm">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-black">Total Parts</p>
+                        <p class="mt-3 text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">{{ total_parts }}</p>
+                        <p class="mt-2 text-xs text-slate-500 font-medium">Active items in catalog</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-amber-500/10 group-hover:text-amber-600 transition-all duration-200 border border-slate-200">
+                        <i class="fas fa-boxes-stacked text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOW STOCK -->
+            <div class="group bg-white border border-slate-200 rounded-2xl p-6 hover:border-amber-500/40 hover:shadow-md transition-all duration-200 shadow-sm">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.18em] text-amber-600 font-black">Low Stock</p>
+                        <p class="mt-3 text-3xl sm:text-4xl font-black text-amber-600 tracking-tight">{{ low_stock_parts }}</p>
+                        <p class="mt-2 text-xs text-slate-500 font-medium">Restock recommended</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center border border-amber-500/20">
+                        <i class="fas fa-triangle-exclamation text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OUT OF STOCK -->
+            <div class="group bg-white border border-slate-200 rounded-2xl p-6 hover:border-rose-500/40 hover:shadow-md transition-all duration-200 shadow-sm">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.18em] text-rose-600 font-black">Out of Stock</p>
+                        <p class="mt-3 text-3xl sm:text-4xl font-black text-rose-600 tracking-tight">{{ out_of_stock_parts }}</p>
+                        <p class="mt-2 text-xs text-slate-500 font-medium">Zero quantity items</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center border border-rose-500/20">
+                        <i class="fas fa-ban text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PENDING ENQUIRIES -->
+            <div class="group bg-white border border-slate-200 rounded-2xl p-6 hover:border-emerald-500/40 hover:shadow-md transition-all duration-200 shadow-sm">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.18em] text-emerald-600 font-black">Pending Enquiries</p>
+                        <p class="mt-3 text-3xl sm:text-4xl font-black text-emerald-600 tracking-tight">{{ pending_enquiries }}</p>
+                        <p class="mt-2 text-xs text-slate-500 font-medium">Out of {{ total_enquiries }} total</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center border border-emerald-500/20">
+                        <i class="fas fa-envelope-open-text text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- =====================================================
+         QUICK ACTIONS GRID
+    ====================================================== -->
+    <section>
+        <div class="flex items-center justify-between gap-4 mb-4">
+            <div>
+                <p class="text-[10px] uppercase tracking-[0.18em] text-amber-600 font-black">Shortcuts</p>
+                <h2 class="mt-0.5 text-xl font-black text-slate-900 tracking-tight">Quick Actions</h2>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <a href="{% url 'dashboard:part_create' %}" class="group bg-white border border-slate-200 rounded-2xl p-5 hover:border-amber-500/40 hover:shadow-md transition-all duration-200 shadow-sm">
+                <div class="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center border border-amber-500/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h3 class="mt-4 font-black text-slate-900 group-hover:text-amber-600 transition-colors">Add Spare Part</h3>
+                <p class="mt-1 text-xs text-slate-500 font-medium">Create a new inventory item quickly.</p>
+            </a>
+
+            <a href="{% url 'dashboard:brand_list' %}" class="group bg-white border border-slate-200 rounded-2xl p-5 hover:border-slate-300 hover:shadow-md transition-all duration-200 shadow-sm">
+                <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-trademark"></i>
+                </div>
+                <h3 class="mt-4 font-black text-slate-900 group-hover:text-slate-800 transition-colors">Manage Brands</h3>
+                <p class="mt-1 text-xs text-slate-500 font-medium">Add or update product manufacturers.</p>
+            </a>
+
+            <a href="{% url 'dashboard:category_list' %}" class="group bg-white border border-slate-200 rounded-2xl p-5 hover:border-slate-300 hover:shadow-md transition-all duration-200 shadow-sm">
+                <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <h3 class="mt-4 font-black text-slate-900 group-hover:text-slate-800 transition-colors">Manage Categories</h3>
+                <p class="mt-1 text-xs text-slate-500 font-medium">Organize spare parts cleanly.</p>
+            </a>
+
+            <a href="{% url 'dashboard:enquiry_list' %}" class="group bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-500/40 hover:shadow-md transition-all duration-200 shadow-sm">
+                <div class="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center border border-emerald-500/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <h3 class="mt-4 font-black text-slate-900 group-hover:text-emerald-600 transition-colors">Customer Enquiries</h3>
+                <p class="mt-1 text-xs text-slate-500 font-medium">Review customer requests and statuses.</p>
+            </a>
+
+        </div>
+    </section>
+
+    <!-- =====================================================
+         MAIN DATA SECTIONS (Recent Parts & Enquiries)
+    ====================================================== -->
+    <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        <!-- RECENT SPARE PARTS -->
+        <div class="xl:col-span-2 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-amber-600 font-black">Inventory</p>
+                    <h2 class="mt-0.5 font-black text-lg text-slate-900">Recent Spare Parts</h2>
+                </div>
+                <a href="{% url 'dashboard:part_list' %}" class="text-xs font-bold text-slate-500 hover:text-amber-600 transition-colors">
+                    View All <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">
+                            <th class="px-6 py-3.5">Part Details</th>
+                            <th class="px-6 py-3.5">Brand</th>
+                            <th class="px-6 py-3.5">Stock</th>
+                            <th class="px-6 py-3.5 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        {% for part in parts|slice:":8" %}
+                        <tr class="hover:bg-slate-50/85 transition-colors">
+                            <td class="px-6 py-4">
+                                <a href="{% url 'dashboard:part_update' part.pk %}" class="group block">
+                                    <p class="font-bold text-slate-900 group-hover:text-amber-600 transition-colors">{{ part.name }}</p>
+                                    <p class="mt-0.5 text-[11px] font-mono text-slate-500">{{ part.part_number }}</p>
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 text-xs font-medium text-slate-600">
+                                {{ part.brand.name }}
+                            </td>
+                            <td class="px-6 py-4 font-bold text-slate-800">
+                                {{ part.quantity }}
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                {% if part.quantity == 0 %}
+                                    <span class="inline-flex px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 text-[10px] font-bold">
+                                        Out of Stock
+                                    </span>
+                                {% elif part.quantity <= 5 %}
+                                    <span class="inline-flex px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold">
+                                        Low Stock
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">
+                                        In Stock
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-slate-400">
+                                <i class="fas fa-box-open text-3xl mb-2"></i>
+                                <p class="text-sm">No spare parts found.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- RECENT ENQUIRIES -->
+        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.18em] text-emerald-600 font-black">Customer</p>
+                        <h2 class="mt-0.5 font-black text-lg text-slate-900">Recent Enquiries</h2>
+                    </div>
+                    <a href="{% url 'dashboard:enquiry_list' %}" class="text-xs font-bold text-slate-500 hover:text-emerald-600 transition-colors">
+                        View All
+                    </a>
+                </div>
+
+                <div class="divide-y divide-slate-100">
+                    {% for enquiry in enquiries|slice:":5" %}
+                    <div class="px-6 py-4 hover:bg-slate-50/85 transition-colors">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-slate-900 truncate">{{ enquiry.name }}</p>
+                                <p class="mt-0.5 text-xs text-slate-600 truncate">{{ enquiry.part }}</p>
+                            </div>
+                            
+                            {% if enquiry.is_handled %}
+                                <span class="flex-shrink-0 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                                    Done
+                                </span>
+                            {% else %}
+                                <span class="flex-shrink-0 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold">
+                                    Pending
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                            <span>{{ enquiry.phone }}</span>
+                            <span class="text-slate-400">{{ enquiry.created_at|date:"M d, Y" }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="px-6 py-12 text-center text-slate-400">
+                        <i class="fas fa-envelope-open text-3xl mb-2"></i>
+                        <p class="text-sm">No enquiries yet.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-200 text-center">
+                <a href="{% url 'dashboard:enquiry_list' %}" class="text-xs font-bold text-amber-600 hover:underline">
+                    Manage all customer requests &rarr;
+                </a>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         BRAND & CATEGORY SUMMARY TAGS
+    ====================================================== -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- BRANDS -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-amber-600 font-black">Manufacturers</p>
+                    <h2 class="mt-0.5 text-lg font-black text-slate-900">Brands</h2>
+                </div>
+                <a href="{% url 'dashboard:brand_list' %}" class="text-xs font-bold text-slate-500 hover:text-amber-600 transition-colors">
+                    Manage
+                </a>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                {% for brand in brands|slice:":12" %}
+                    <a href="{% url 'dashboard:brand_update' brand.pk %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 hover:border-amber-500/40 hover:text-amber-600 text-xs font-bold text-slate-700 transition-all">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        {{ brand.name }}
+                    </a>
+                {% empty %}
+                    <p class="text-sm text-slate-400">No brands added yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- CATEGORIES -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-amber-600 font-black">Organization</p>
+                    <h2 class="mt-0.5 text-lg font-black text-slate-900">Categories</h2>
+                </div>
+                <a href="{% url 'dashboard:category_list' %}" class="text-xs font-bold text-slate-500 hover:text-amber-600 transition-colors">
+                    Manage
+                </a>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {% for category in categories|slice:":9" %}
+                    <a href="{% url 'dashboard:category_update' category.pk %}" class="px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-amber-500/40 hover:text-amber-600 text-xs font-bold text-slate-700 text-center transition-all truncate">
+                        {{ category.name }}
+                    </a>
+                {% empty %}
+                    <p class="col-span-full text-sm text-slate-400">No categories added yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         STOCK ALERT BANNER (Conditional)
+    ====================================================== -->
+    {% if low_stock_parts or out_of_stock_parts %}
+    <section class="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center border border-amber-500/20">
+                    <i class="fas fa-triangle-exclamation text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-base text-slate-900">Inventory needs attention</h3>
+                    <p class="mt-0.5 text-xs sm:text-sm text-slate-600 font-medium">
+                        {% if low_stock_parts %}{{ low_stock_parts }} part{{ low_stock_parts|pluralize }} running low. {% endif %}
+                        {% if out_of_stock_parts %}{{ out_of_stock_parts }} part{{ out_of_stock_parts|pluralize }} currently out of stock.{% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <a href="{% url 'dashboard:part_list' %}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 text-xs font-black shadow transition-all whitespace-nowrap">
+                Check Inventory <i class="fas fa-arrow-right text-[10px]"></i>
+            </a>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Footer Note -->
+    <footer class="pt-4 pb-6 text-center border-t border-slate-200">
+        <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">
+            AutoParts Hub Admin Panel &bull; Secure Management Interface
+        </p>
+    </footer>
+
+</div>
+
+{% endblock %}

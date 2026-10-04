@@ -1,0 +1,76 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}{{ action }} Part - AutoParts Hub{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 sm:p-8">
+    <div class="border-b border-slate-200 pb-4 mb-6">
+        <h2 class="text-xl font-bold font-serif text-slate-900">{{ action }} Inventory Part</h2>
+        <p class="text-xs text-slate-500 mt-1">Fill in the specification details below.</p>
+    </div>
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Part Number</label>
+                {{ form.part_number }}
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Part Name</label>
+                {{ form.name }}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Brand</label>
+                {{ form.brand }}
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Category</label>
+                {{ form.category }}
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Description</label>
+            {{ form.description }}
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Compatible With</label>
+                {{ form.compatible_with }}
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Quantity</label>
+                {{ form.quantity }}
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Price (₹)</label>
+                {{ form.price }}
+            </div>
+        </div>
+
+        <div class="flex items-center gap-6 pt-2">
+            <label class="flex items-center gap-2 text-sm text-slate-700 font-medium">
+                {{ form.is_featured }} Featured Item
+            </label>
+            <label class="flex items-center gap-2 text-sm text-slate-700 font-medium">
+                {{ form.is_active }} Active Status
+            </label>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
+            <a href="{% url 'dashboard:part_list' %}" class="px-5 py-2.5 bg-white text-slate-700 hover:bg-slate-100 font-bold text-xs rounded-xl border border-slate-300 shadow-sm transition-all">
+                Cancel
+            </a>
+            <button type="submit" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors shadow-sm">
+                Save Part
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

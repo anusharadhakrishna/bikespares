@@ -1,0 +1,188 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Brands | AutoParts Admin
+{% endblock %}
+
+{% block page_heading %}
+Brands
+{% endblock %}
+
+{% block content %}
+
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <p class="text-sm text-slate-500">
+                Manage motorcycle spare-part brands and their associated catalogs.
+            </p>
+        </div>
+
+        <a
+            href="{% url 'dashboard:brand_create' %}"
+            class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95"
+        >
+            <i class="fas fa-plus text-xs"></i>
+            Add Brand
+        </a>
+    </div>
+
+    <!-- Search and Filters Bar -->
+    <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+        <form method="GET" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
+                    <i class="fas fa-search text-xs"></i>
+                </span>
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ search_query }}"
+                    placeholder="Search by brand name or slug..."
+                    class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/25 focus:border-amber-500 transition"
+                >
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button
+                    type="submit"
+                    class="px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition flex items-center gap-2 border border-slate-200 shadow-sm"
+                >
+                    <span>Filter</span>
+                </button>
+                
+                {% if search_query %}
+                <a
+                    href="{% url 'dashboard:brand_list' %}"
+                    class="px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 text-sm transition border border-slate-200 shadow-sm"
+                    title="Clear search"
+                >
+                    <i class="fas fa-times"></i>
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Container -->
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="border-b border-slate-200 bg-slate-50">
+                    <tr>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            Brand
+                        </th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            Slug
+                        </th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            Parts Count
+                        </th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-slate-100">
+                    {% for brand in brands %}
+                    <tr class="hover:bg-slate-50/85 transition-colors group">
+                        
+                        <!-- Brand Name & Icon -->
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 border border-amber-500/20 group-hover:border-amber-500/40 transition">
+                                    <i class="fas fa-tag text-sm"></i>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-slate-900 block group-hover:text-amber-600 transition-colors">
+                                        {{ brand.name }}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Slug -->
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono bg-slate-100 text-slate-600 border border-slate-200">
+                                {{ brand.slug }}
+                            </span>
+                        </td>
+
+                        <!-- Parts Count Badge -->
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                {{ brand.parts.count }} parts
+                            </span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a
+                                    href="{% url 'dashboard:brand_update' brand.pk %}"
+                                    class="w-9 h-9 rounded-xl bg-slate-100 text-amber-700 border border-slate-200 flex items-center justify-center hover:bg-amber-500 hover:text-slate-950 hover:border-amber-500 transition-all shadow-sm"
+                                    title="Edit Brand"
+                                >
+                                    <i class="fas fa-pen text-xs"></i>
+                                </a>
+
+                                <a
+                                    href="{% url 'dashboard:brand_delete' brand.pk %}"
+                                    class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all shadow-sm"
+                                    title="Delete Brand"
+                                >
+                                    <i class="fas fa-trash text-xs"></i>
+                                </a>
+                            </div>
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <!-- Empty State -->
+                    <tr>
+                        <td colspan="4" class="px-6 py-16 text-center">
+                            <div class="max-w-sm mx-auto space-y-4">
+                                <div class="w-16 h-16 mx-auto rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 text-xl">
+                                    <i class="fas fa-folder-open"></i>
+                                </div>
+                                <div class="space-y-1">
+                                    <h3 class="text-slate-900 font-bold text-base">No brands found</h3>
+                                    <p class="text-slate-500 text-xs leading-relaxed">
+                                        {% if search_query %}
+                                            We couldn't find anything matching "<span class="text-slate-800 font-semibold">{{ search_query }}</span>". Try checking your spelling or clearing the filter.
+                                        {% else %}
+                                            Get started by adding your first motorcycle spare-part brand to the system.
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                {% if not search_query %}
+                                <div class="pt-2">
+                                    <a
+                                        href="{% url 'dashboard:brand_create' %}"
+                                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition border border-slate-200 shadow-sm"
+                                    >
+                                        <i class="fas fa-plus text-xs text-amber-600"></i>
+                                        Add First Brand
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Delete Category | AutoParts Admin
+{% endblock %}
+
+{% block page_heading %}
+Delete Category
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-xl mx-auto">
+
+    <div class="bg-[#211c18] border border-stone-800 rounded-3xl p-6">
+
+        <div class="flex items-center gap-4 mb-6">
+
+            <div class="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center">
+                <i class="fas fa-trash"></i>
+            </div>
+
+            <div>
+
+                <p class="text-xs uppercase text-rose-400 font-black">
+                    Warning
+                </p>
+
+                <h2 class="text-xl font-black text-stone-100">
+                    Delete Category
+                </h2>
+
+            </div>
+
+        </div>
+
+        <p class="text-sm text-stone-400">
+            Are you sure you want to delete
+            <strong class="text-stone-100">
+                {{ category.name }}
+            </strong>?
+        </p>
+
+        <form method="POST" class="flex gap-3 mt-6">
+
+            {% csrf_token %}
+
+            <a
+                href="{% url 'dashboard:category_list' %}"
+                class="flex-1 text-center px-5 py-3 rounded-xl bg-stone-800 text-stone-300 font-bold"
+            >
+                Cancel
+            </a>
+
+            <button
+                type="submit"
+                class="flex-1 px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black"
+            >
+                Delete
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

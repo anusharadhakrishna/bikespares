@@ -1,0 +1,896 @@
+{% load static %}
+
+<!-- =========================================================
+     TOP BAR
+========================================================= -->
+
+<div class="bg-[#15191e] text-gray-400 text-[11px]">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div
+            class="flex items-center justify-between
+                   py-2 gap-4"
+        >
+
+            <span class="truncate">
+
+                Motorcycle & scooter parts.
+
+                <strong class="text-white font-medium">
+                    Made for the road ahead.
+                </strong>
+
+            </span>
+
+
+            <span class="hidden sm:block shrink-0">
+                Mon–Sat · 9:00 AM–7:00 PM
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<header
+    class="sticky top-0 z-50
+           bg-white/95
+           backdrop-blur-xl
+           border-b border-gray-200"
+>
+
+    <div
+        class="max-w-7xl mx-auto
+               px-4 sm:px-6 lg:px-8"
+    >
+
+        <div
+            class="h-[68px]
+                   
+                   lg:h-[84px]
+                   flex items-center
+                   justify-between
+                   gap-4"
+        >
+
+            <!-- =================================================
+                 LOGO
+            ================================================== -->
+
+            <a
+                href="{% url 'parts:home' %}"
+                class="flex items-center
+                       flex-shrink-0"
+                aria-label="Bike Spare Parts home"
+            >
+
+                <img
+                    src="{% static 'images/bike-logo.png' %}"
+                    alt="Bike Spare Parts"
+                    class="w-[76px]
+                           sm:w-[100px]
+                           h-auto
+                           object-contain"
+                    onerror="
+                        this.style.display='none';
+                        this.nextElementSibling.style.display='inline-flex';
+                    "
+                >
+
+                <!-- Fallback Logo -->
+                <span
+                    class="hidden
+                           items-center
+                           bg-[#df3039]
+                           text-white
+                           text-lg sm:text-xl
+                           font-black
+                           px-3 py-1
+                           rounded-lg"
+                >
+                    BP
+                </span>
+
+            </a>
+
+
+            <!-- =================================================
+                 DESKTOP NAVIGATION
+            ================================================== -->
+
+            <nav
+                class="hidden lg:flex
+                       items-center
+                       gap-6 xl:gap-7
+                       text-sm xl:text-md
+                       font-bold"
+                aria-label="Main navigation"
+            >
+
+                <a
+                    href="{% url 'parts:home' %}#home"
+                    class="hover:text-[#df3039]
+                           transition-colors"
+                >
+                    Home
+                </a>
+
+
+                <a
+                    href="{% url 'parts:parts_list' %}"
+                    class="hover:text-[#df3039]
+                           transition-colors"
+                >
+                    Spare Parts
+                </a>
+
+
+                <a
+                    href="{% url 'parts:home' %}#about"
+                    class="hover:text-[#df3039]
+                           transition-colors"
+                >
+                    About Us
+                </a>
+
+
+                <a
+                    href="{% url 'parts:home' %}#brands"
+                    class="hover:text-[#df3039]
+                           transition-colors"
+                >
+                    Brands
+                </a>
+
+
+                <a
+                    href="{% url 'parts:home' %}#services"
+                    class="hover:text-[#df3039]
+                           transition-colors"
+                >
+                    Services
+                </a>
+
+
+                <a
+                    href="{% url 'parts:home' %}#contact"
+                    class="hover:text-[#df3039]
+                           transition-colors"
+                >
+                    Contact
+                </a>
+
+            </nav>
+
+
+            <!-- =================================================
+                 DESKTOP CTA
+            ================================================== -->
+
+            <a
+                href="{% url 'parts:home' %}#contact"
+                class="hidden md:inline-flex
+                       lg:hidden
+                       xl:inline-flex
+                       items-center
+                       justify-center
+                       gap-2
+                       bg-[#df3039]
+                       hover:bg-[#bc2029]
+                       text-white
+                       px-5 py-3
+                       rounded-lg
+                       text-xs
+                       font-bold
+                       transition-all
+                       hover:-translate-y-0.5
+                       shadow-sm
+                       shadow-[#df3039]/20"
+            >
+
+                Get in touch
+
+                <span>↗</span>
+
+            </a>
+
+
+            <!-- =================================================
+                 MOBILE MENU BUTTON
+            ================================================== -->
+
+            <button
+                type="button"
+                id="mobileMenuButton"
+                class="lg:hidden
+                       inline-flex
+                       items-center
+                       justify-center
+                       w-11
+                       h-11
+                       rounded-xl
+                       border border-gray-200
+                       bg-white
+                       text-gray-800
+                       hover:border-[#df3039]
+                       hover:text-[#df3039]
+                       transition-all
+                       duration-200"
+                aria-label="Open menu"
+                aria-expanded="false"
+            >
+
+                <i
+                    id="mobileMenuIcon"
+                    class="fa-solid fa-bars text-lg"
+                ></i>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- =========================================================
+     MOBILE OVERLAY
+========================================================= -->
+
+<div
+    id="mobileMenuOverlay"
+    class="fixed
+           inset-0
+           bg-black/50
+           backdrop-blur-sm
+           z-[60]
+           opacity-0
+           invisible
+           transition-all
+           duration-300
+           lg:hidden"
+></div>
+
+
+<!-- =========================================================
+     MOBILE SIDE MENU
+========================================================= -->
+
+<aside
+    id="mobileSideMenu"
+    class="fixed
+           top-0
+           right-0
+           h-full
+           w-[88%]
+           max-w-[360px]
+           bg-white
+           z-[70]
+           translate-x-full
+           transition-transform
+           duration-300
+           ease-out
+           shadow-2xl
+           lg:hidden
+           flex
+           flex-col"
+>
+
+    <!-- =====================================================
+         MOBILE MENU HEADER
+    ====================================================== -->
+
+    <div
+        class="flex
+               items-center
+               justify-between
+               px-5
+               h-[74px]
+               border-b
+               border-gray-100
+               shrink-0"
+    >
+
+        <!-- Logo -->
+        <a
+            href="{% url 'parts:home' %}"
+            class="flex items-center"
+        >
+
+            <img
+                src="{% static 'images/bike-logo.png' %}"
+                alt="Bike Spare Parts"
+                class="w-[88px] h-auto object-contain"
+            >
+
+        </a>
+
+
+        <!-- Close -->
+        <button
+            type="button"
+            id="mobileMenuClose"
+            class="w-10
+                   h-10
+                   rounded-xl
+                   bg-gray-50
+                   border border-gray-200
+                   flex items-center
+                   justify-center
+                   text-gray-700
+                   hover:bg-red-50
+                   hover:text-[#df3039]
+                   hover:border-[#df3039]
+                   transition-all"
+            aria-label="Close menu"
+        >
+
+            <i class="fa-solid fa-xmark text-lg"></i>
+
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         MOBILE MENU CONTENT
+    ====================================================== -->
+
+    <div
+        class="flex-1
+               overflow-y-auto
+               px-4
+               py-5"
+    >
+
+        <!-- Navigation Label -->
+        <p
+            class="px-3
+                   mb-3
+                   text-[10px]
+                   font-black
+                   uppercase
+                   tracking-[0.18em]
+                   text-gray-400"
+        >
+            Navigation
+        </p>
+
+
+        <!-- Home -->
+        <a
+            href="{% url 'parts:home' %}#home"
+            class="mobile-menu-link"
+        >
+
+            <span
+                class="mobile-menu-icon"
+            >
+                <i class="fa-solid fa-house"></i>
+            </span>
+
+            <span>Home</span>
+
+            <i
+                class="fa-solid
+                       fa-chevron-right
+                       ml-auto
+                       text-xs
+                       text-gray-300"
+            ></i>
+
+        </a>
+
+
+        <!-- Spare Parts -->
+        <a
+            href="{% url 'parts:parts_list' %}"
+            class="mobile-menu-link"
+        >
+
+            <span
+                class="mobile-menu-icon"
+            >
+                <i class="fa-solid fa-gears"></i>
+            </span>
+
+            <span>Spare Parts</span>
+
+            <i
+                class="fa-solid
+                       fa-chevron-right
+                       ml-auto
+                       text-xs
+                       text-gray-300"
+            ></i>
+
+        </a>
+
+
+        <!-- About -->
+        <a
+            href="{% url 'parts:home' %}#about"
+            class="mobile-menu-link"
+        >
+
+            <span
+                class="mobile-menu-icon"
+            >
+                <i class="fa-solid fa-circle-info"></i>
+            </span>
+
+            <span>About Us</span>
+
+            <i
+                class="fa-solid
+                       fa-chevron-right
+                       ml-auto
+                       text-xs
+                       text-gray-300"
+            ></i>
+
+        </a>
+
+
+        <!-- Brands -->
+        <a
+            href="{% url 'parts:home' %}#brands"
+            class="mobile-menu-link"
+        >
+
+            <span
+                class="mobile-menu-icon"
+            >
+                <i class="fa-solid fa-tags"></i>
+            </span>
+
+            <span>Brands</span>
+
+            <i
+                class="fa-solid
+                       fa-chevron-right
+                       ml-auto
+                       text-xs
+                       text-gray-300"
+            ></i>
+
+        </a>
+
+
+        <!-- Services -->
+        <a
+            href="{% url 'parts:home' %}#services"
+            class="mobile-menu-link"
+        >
+
+            <span
+                class="mobile-menu-icon"
+            >
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+            </span>
+
+            <span>Services</span>
+
+            <i
+                class="fa-solid
+                       fa-chevron-right
+                       ml-auto
+                       text-xs
+                       text-gray-300"
+            ></i>
+
+        </a>
+
+
+        <!-- Contact -->
+        <a
+            href="{% url 'parts:home' %}#contact"
+            class="mobile-menu-link"
+        >
+
+            <span
+                class="mobile-menu-icon"
+            >
+                <i class="fa-solid fa-phone"></i>
+            </span>
+
+            <span>Contact</span>
+
+            <i
+                class="fa-solid
+                       fa-chevron-right
+                       ml-auto
+                       text-xs
+                       text-gray-300"
+            ></i>
+
+        </a>
+
+
+        <!-- Divider -->
+        <div
+            class="my-5
+                   border-t
+                   border-gray-100"
+        ></div>
+
+
+        <!-- Mobile CTA -->
+        <a
+            href="{% url 'parts:home' %}#contact"
+            class="flex
+                   items-center
+                   justify-center
+                   gap-2
+                   w-full
+                   bg-[#df3039]
+                   hover:bg-[#bc2029]
+                   text-white
+                   py-4
+                   rounded-xl
+                   text-sm
+                   font-bold
+                   shadow-lg
+                   shadow-[#df3039]/20
+                   transition-all"
+        >
+
+            <i class="fa-solid fa-message"></i>
+
+            Get in touch
+
+            <span>↗</span>
+
+        </a>
+
+
+        <!-- Mobile Info -->
+        <div
+            class="mt-6
+                   rounded-2xl
+                   bg-[#15191e]
+                   p-5
+                   text-white"
+        >
+
+            <p
+                class="text-xs
+                       font-bold
+                       text-gray-400
+                       uppercase
+                       tracking-wider"
+            >
+                Opening Hours
+            </p>
+
+            <div
+                class="flex
+                       items-center
+                       gap-3
+                       mt-3"
+            >
+
+                <div
+                    class="w-9
+                           h-9
+                           rounded-lg
+                           bg-[#df3039]/15
+                           text-[#ff5c65]
+                           flex
+                           items-center
+                           justify-center"
+                >
+
+                    <i class="fa-regular fa-clock"></i>
+
+                </div>
+
+                <div>
+
+                    <p
+                        class="text-sm
+                               font-semibold"
+                    >
+                        Monday – Saturday
+                    </p>
+
+                    <p
+                        class="text-xs
+                               text-gray-400
+                               mt-0.5"
+                    >
+                        9:00 AM – 7:00 PM
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+<!-- =========================================================
+     MOBILE MENU STYLES
+========================================================= -->
+
+<style>
+
+    .mobile-menu-link {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        padding: 13px 12px;
+        margin-bottom: 4px;
+        border-radius: 12px;
+        color: #1f2937;
+        font-size: 14px;
+        font-weight: 700;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-menu-link:hover {
+        background: #fef2f2;
+        color: #df3039;
+    }
+
+    .mobile-menu-icon {
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: #f9fafb;
+        color: #df3039;
+        border: 1px solid #f1f1f1;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-menu-link:hover .mobile-menu-icon {
+        background: #df3039;
+        color: white;
+        border-color: #df3039;
+    }
+
+</style>
+
+
+<!-- =========================================================
+     MOBILE MENU SCRIPT
+========================================================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const menuButton =
+        document.getElementById(
+            "mobileMenuButton"
+        );
+
+    const menuClose =
+        document.getElementById(
+            "mobileMenuClose"
+        );
+
+    const sideMenu =
+        document.getElementById(
+            "mobileSideMenu"
+        );
+
+    const overlay =
+        document.getElementById(
+            "mobileMenuOverlay"
+        );
+
+    const menuIcon =
+        document.getElementById(
+            "mobileMenuIcon"
+        );
+
+    const menuLinks =
+        document.querySelectorAll(
+            ".mobile-menu-link"
+        );
+
+
+    if (
+        !menuButton ||
+        !menuClose ||
+        !sideMenu ||
+        !overlay
+    ) {
+        return;
+    }
+
+
+    /* =====================================================
+       OPEN MENU
+    ====================================================== */
+
+    function openMobileMenu() {
+
+        sideMenu.classList.remove(
+            "translate-x-full"
+        );
+
+        overlay.classList.remove(
+            "opacity-0",
+            "invisible"
+        );
+
+        overlay.classList.add(
+            "opacity-100",
+            "visible"
+        );
+
+
+        document.body.classList.add(
+            "overflow-hidden"
+        );
+
+
+        menuButton.setAttribute(
+            "aria-expanded",
+            "true"
+        );
+
+
+        menuIcon.classList.remove(
+            "fa-bars"
+        );
+
+        menuIcon.classList.add(
+            "fa-xmark"
+        );
+
+    }
+
+
+    /* =====================================================
+       CLOSE MENU
+    ====================================================== */
+
+    function closeMobileMenu() {
+
+        sideMenu.classList.add(
+            "translate-x-full"
+        );
+
+        overlay.classList.remove(
+            "opacity-100",
+            "visible"
+        );
+
+        overlay.classList.add(
+            "opacity-0",
+            "invisible"
+        );
+
+
+        document.body.classList.remove(
+            "overflow-hidden"
+        );
+
+
+        menuButton.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+
+
+        menuIcon.classList.remove(
+            "fa-xmark"
+        );
+
+        menuIcon.classList.add(
+            "fa-bars"
+        );
+
+    }
+
+
+    /* =====================================================
+       OPEN
+    ====================================================== */
+
+    menuButton.addEventListener(
+        "click",
+        openMobileMenu
+    );
+
+
+    /* =====================================================
+       CLOSE BUTTON
+    ====================================================== */
+
+    menuClose.addEventListener(
+        "click",
+        closeMobileMenu
+    );
+
+
+    /* =====================================================
+       OVERLAY CLICK
+    ====================================================== */
+
+    overlay.addEventListener(
+        "click",
+        closeMobileMenu
+    );
+
+
+    /* =====================================================
+       MENU LINK CLICK
+       
+       Automatically close after navigation
+    ====================================================== */
+
+    menuLinks.forEach(
+        function (link) {
+
+            link.addEventListener(
+                "click",
+                closeMobileMenu
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       ESCAPE KEY
+    ====================================================== */
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Escape"
+            ) {
+
+                closeMobileMenu();
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       CLOSE WHEN RESIZED TO DESKTOP
+    ====================================================== */
+
+    window.addEventListener(
+        "resize",
+        function () {
+
+            if (
+                window.innerWidth >= 1024
+            ) {
+
+                closeMobileMenu();
+
+            }
+
+        }
+    );
+
+});
+
+</script>

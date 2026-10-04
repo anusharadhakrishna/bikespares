@@ -1,0 +1,259 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Reliable motorcycle and scooter spare parts from trusted brands.">
+    <title>
+        {% block title %}
+            Bike Spare Parts
+        {% endblock %}
+    </title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'parts/css/style.css' %}">
+
+    {% block extra_css %}
+    {% endblock %}
+
+    <style>
+        :root {
+            --ink: #15191e;
+            --red: #df3039;
+            --red-dark: #bc2029;
+            --muted: #65707b;
+            --line: #e2e5e8;
+            --paper: #f5f6f7;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            color: var(--ink);
+            background-color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button, a, input, select, textarea {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        ::selection {
+            background: var(--red);
+            color: white;
+        }
+
+        :focus-visible {
+            outline: 3px solid #ed6167;
+            outline-offset: 3px;
+        }
+
+        .hero-mic-btn.listening {
+            background: var(--red) !important;
+            color: white !important;
+            animation: micPulse 1.2s infinite;
+        }
+
+        @keyframes micPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(223, 48, 57, 0.4); }
+            70% { box-shadow: 0 0 0 12px rgba(223, 48, 57, 0); }
+        }
+
+        .speak-product-btn.is-speaking {
+            color: white !important;
+            background: var(--red) !important;
+            border-color: var(--red) !important;
+            animation: speakPulse 1.05s ease-in-out infinite;
+        }
+
+        @keyframes speakPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(223, 48, 57, 0.2); }
+            50% { box-shadow: 0 0 0 6px rgba(223, 48, 57, 0); }
+        }
+
+        .section-eyebrow {
+            margin-bottom: 12px;
+            color: var(--red);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        .section-title {
+            color: #15191e;
+            font-size: clamp(28px, 3.2vw, 42px);
+            line-height: 1.1;
+            letter-spacing: -0.035em;
+            font-weight: 900;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col min-h-screen    min-h-screen text-gray-900"
+    style="
+        background-image:
+            linear-gradient(
+                rgba(5, 8, 10, 0.88),
+                rgba(5, 8, 10, 0.94)
+            ),
+            url('{% static "images/hero-banner.png" %}');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    ">
+
+    {% include "header.html" %}
+
+    <main id="main" class="flex-grow">
+
+
+        
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {% include "footer.html" %}
+
+    <!-- Core Interactive Voice & TTS Script -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("partSearchInput");
+        const voiceBtn = document.getElementById("voiceSearchBtn");
+        const voiceStatus = document.getElementById("voiceStatus");
+        const micIcon = document.getElementById("micIcon");
+        const searchForm = document.getElementById("partSearchForm");
+
+        /* ===== VOICE SEARCH ===== */
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition && voiceBtn) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = "en-IN";
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            voiceBtn.addEventListener("click", function () {
+                try {
+                    recognition.start();
+                    voiceBtn.classList.add("listening");
+                    micIcon.innerHTML = '<i class="fa-solid fa-microphone-lines"></i>';
+                    voiceStatus.textContent = "Listening… Speak the part name or bike model.";
+                    voiceStatus.style.color = "#df3039";
+                } catch (e) {
+                    console.log("Recognition already running");
+                }
+            });
+
+            recognition.addEventListener("result", function (event) {
+                const transcript = event.results[0][0].transcript.trim();
+                searchInput.value = transcript;
+                sessionStorage.setItem("voiceProductSearch", "true");
+                voiceStatus.textContent = 'Searching for "' + transcript + '"…';
+                setTimeout(function () { searchForm.submit(); }, 450);
+            });
+
+            recognition.addEventListener("start", function () {
+                voiceBtn.classList.add("listening");
+                micIcon.innerHTML = '<i class="fa-solid fa-microphone-lines"></i>';
+            });
+
+            recognition.addEventListener("end", function () {
+                voiceBtn.classList.remove("listening");
+                micIcon.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+            });
+
+            recognition.addEventListener("error", function (event) {
+                voiceBtn.classList.remove("listening");
+                micIcon.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                if (event.error === "not-allowed") {
+                    voiceStatus.textContent = "Please allow microphone access in your browser settings.";
+                } else if (event.error === "no-speech") {
+                    voiceStatus.textContent = "No speech detected. Please try again.";
+                } else {
+                    voiceStatus.textContent = "Voice search failed. Please try again.";
+                }
+            });
+        }
+
+        /* ===== TEXT TO SPEECH ===== */
+        function speakProduct(productName, brand, partNumber, activeButton) {
+            if (!("speechSynthesis" in window)) return;
+            window.speechSynthesis.cancel();
+
+            document.querySelectorAll(".speak-product-btn").forEach(function (btn) {
+                btn.classList.remove("is-speaking");
+                const t = btn.querySelector(".speak-product-title");
+                if (t) t.textContent = "Listen";
+            });
+
+            if (activeButton) {
+                activeButton.classList.add("is-speaking");
+                const at = activeButton.querySelector(".speak-product-title");
+                if (at) at.textContent = "Speaking…";
+            }
+
+            const speakableNumber = partNumber.split("").map(function (c) {
+                if (c === "-") return "dash";
+                if (c === "_") return "underscore";
+                return c;
+            }).join(" ");
+
+            const text = brand + ". " + productName + ". Part number: " + speakableNumber + ".";
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.lang = "en-IN";
+            speech.rate = 0.85;
+            speech.pitch = 1;
+            speech.volume = 1;
+
+            const voices = window.speechSynthesis.getVoices();
+            const indianVoice = voices.find(function (v) { return v.lang && v.lang.toLowerCase() === "en-in"; })
+                             || voices.find(function (v) { return v.lang && v.lang.toLowerCase().startsWith("en-in"); })
+                             || voices.find(function (v) { return v.lang && v.lang.toLowerCase().startsWith("en"); });
+            if (indianVoice) speech.voice = indianVoice;
+
+            speech.onend = speech.onerror = function () {
+                if (activeButton) {
+                    activeButton.classList.remove("is-speaking");
+                    const at = activeButton.querySelector(".speak-product-title");
+                    if (at) at.textContent = "Listen";
+                }
+            };
+
+            window.speechSynthesis.speak(speech);
+        }
+
+        /* Auto-speak first result after voice search redirection */
+        if (sessionStorage.getItem("voiceProductSearch") === "true") {
+            sessionStorage.removeItem("voiceProductSearch");
+            setTimeout(function () {
+                const first = document.querySelector("[data-part-number]");
+                if (!first) return;
+                first.scrollIntoView({ behavior: "smooth", block: "center" });
+                first.style.boxShadow = "0 0 0 3px #df3039";
+                setTimeout(function () { first.style.boxShadow = ""; }, 2800);
+                speakProduct(first.dataset.productName, first.dataset.brand, first.dataset.partNumber);
+            }, 700);
+        }
+
+        document.querySelectorAll(".speak-product-btn").forEach(function (button) {
+            button.addEventListener("click", function () {
+                speakProduct(this.dataset.productName, this.dataset.brand, this.dataset.partNumber, this);
+            });
+        });
+    });
+    </script>
+
+    {% block extra_js %}
+    {% endblock %}
+
+</body>
+</html>
