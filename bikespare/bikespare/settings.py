@@ -30,6 +30,7 @@ ALLOWED_HOSTS = [
     
     '14f0-103-5-135-100.ngrok-free.app',
     '127.0.0.1',
+     'balajiautomobiles.pythonanywhere.com',
 ]
 
 
@@ -123,7 +124,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 
 
