@@ -244,7 +244,7 @@ from django.utils.text import slugify
 
 from openpyxl import load_workbook
 
-from .models import Part, Brand, Category
+from inventory.models import Part, Brand, Category
 # from .utils import clean_part_number  # adjust if your function is elsewhere
 
 
