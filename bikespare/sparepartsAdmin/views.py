@@ -234,6 +234,19 @@ def clean_part_number(value):
         pass
 
     return value
+import os
+from decimal import Decimal, InvalidOperation
+
+from django.contrib import messages
+from django.db import transaction
+from django.shortcuts import redirect
+from django.utils.text import slugify
+
+from openpyxl import load_workbook
+
+from .models import Part, Brand, Category
+# from .utils import clean_part_number  # adjust if your function is elsewhere
+
 
 @admin_required
 def part_import_view(request):
@@ -256,255 +269,286 @@ def part_import_view(request):
         )
         return redirect("dashboard:part_list")
 
+    workbook = None
+
     try:
+        # IMPORTANT:
+        # read_only=True prevents the entire Excel workbook
+        # from being loaded into memory.
         workbook = load_workbook(
             excel_file,
-            data_only=True
+            read_only=True,
+            data_only=True,
         )
 
         worksheet = workbook.active
 
-    except Exception as e:
+        # -----------------------------------------
+        # Read header row
+        # -----------------------------------------
 
-        messages.error(
-            request,
-            f"Unable to read Excel file: {str(e)}"
+        header_row = next(
+            worksheet.iter_rows(
+                min_row=1,
+                max_row=1,
+                values_only=True
+            ),
+            None
         )
 
-        return redirect("dashboard:part_list")
+        if not header_row:
+            messages.error(
+                request,
+                "The Excel file is empty."
+            )
+            return redirect("dashboard:part_list")
 
+        headers = [
+            str(value).strip()
+            if value is not None
+            else ""
+            for value in header_row
+        ]
 
-    headers = [
-        str(cell.value).strip()
-        if cell.value is not None
-        else ""
-        for cell in worksheet[1]
-    ]
+        required_columns = [
+            "Part Number",
+            "Item Name",
+            "Brand",
+            "Category",
+            "Qty",
+            "Discount (%)",
+            "Amount",
+        ]
 
+        missing_columns = [
+            column
+            for column in required_columns
+            if column not in headers
+        ]
 
-    required_columns = [
-        "Part Number",
-        "Item Name",
-        "Brand",
-        "Category",
-        "Qty",
-        "Discount (%)",
-        "Amount",
-    ]
+        if missing_columns:
+            messages.error(
+                request,
+                "Missing columns: " + ", ".join(missing_columns)
+            )
+            return redirect("dashboard:part_list")
 
+        column_index = {
+            header: index
+            for index, header in enumerate(headers)
+        }
 
-    missing_columns = [
-        column
-        for column in required_columns
-        if column not in headers
-    ]
+        created_count = 0
+        updated_count = 0
+        skipped_count = 0
 
+        # Don't allow thousands of errors to accumulate in memory.
+        errors = []
 
-    if missing_columns:
+        # -----------------------------------------
+        # Cache Brand and Category objects
+        # -----------------------------------------
 
-        messages.error(
-            request,
-            "Missing columns: "
-            + ", ".join(missing_columns)
-        )
+        brand_cache = {}
+        category_cache = {}
 
-        return redirect("dashboard:part_list")
+        # -----------------------------------------
+        # Process Excel row by row
+        # -----------------------------------------
 
+        for row_number, row in enumerate(
+            worksheet.iter_rows(
+                min_row=2,
+                values_only=True
+            ),
+            start=2
+        ):
 
-    column_index = {
-        header: index
-        for index, header in enumerate(headers)
-    }
+            try:
 
+                part_number = row[
+                    column_index["Part Number"]
+                ]
 
-    created_count = 0
-    updated_count = 0
-    skipped_count = 0
+                name = row[
+                    column_index["Item Name"]
+                ]
 
-    errors = []
+                brand_name = row[
+                    column_index["Brand"]
+                ]
 
+                category_name = row[
+                    column_index["Category"]
+                ]
 
-    try:
+                quantity = row[
+                    column_index["Qty"]
+                ]
 
-        with transaction.atomic():
+                discount = row[
+                    column_index["Discount (%)"]
+                ]
 
-            for row_number, row in enumerate(
-                worksheet.iter_rows(
-                    min_row=2,
-                    values_only=True
-                ),
-                start=2
-            ):
+                amount = row[
+                    column_index["Amount"]
+                ]
 
-                try:
+                # -----------------------------------------
+                # Required fields
+                # -----------------------------------------
 
-                    part_number = row[
-                        column_index["Part Number"]
-                    ]
+                if not part_number:
+                    raise ValueError(
+                        "Part Number is empty"
+                    )
 
-                    name = row[
-                        column_index["Item Name"]
-                    ]
+                if not name:
+                    raise ValueError(
+                        "Item Name is empty"
+                    )
 
-                    brand_name = row[
-                        column_index["Brand"]
-                    ]
+                if not brand_name:
+                    raise ValueError(
+                        "Brand is empty"
+                    )
 
-                    category_name = row[
-                        column_index["Category"]
-                    ]
+                if not category_name:
+                    raise ValueError(
+                        "Category is empty"
+                    )
 
-                    quantity = row[
-                        column_index["Qty"]
-                    ]
+                # -----------------------------------------
+                # Clean strings
+                # -----------------------------------------
 
-                    discount = row[
-                        column_index["Discount (%)"]
-                    ]
+                part_number = clean_part_number(
+                    part_number
+                )
 
-                    amount = row[
-                        column_index["Amount"]
-                    ]
+                name = str(name).strip()
 
+                brand_name = str(
+                    brand_name
+                ).strip()
 
-                    if not part_number:
-                        raise ValueError(
-                            "Part Number is empty"
-                        )
+                category_name = str(
+                    category_name
+                ).strip()
 
-                    if not name:
-                        raise ValueError(
-                            "Item Name is empty"
-                        )
+                # -----------------------------------------
+                # Quantity
+                # -----------------------------------------
 
-                    if not brand_name:
-                        raise ValueError(
-                            "Brand is empty"
-                        )
+                quantity = int(
+                    Decimal(
+                        str(quantity or 0)
+                    )
+                )
 
-                    if not category_name:
-                        raise ValueError(
-                            "Category is empty"
-                        )
+                if quantity < 0:
+                    raise ValueError(
+                        "Quantity cannot be negative"
+                    )
 
+                # -----------------------------------------
+                # Discount
+                # -----------------------------------------
 
-                    # part_number = str(
-                    #     part_number
-                    # ).strip()
-                    
-                    part_number = clean_part_number(part_number)
+                discount = Decimal(
+                    str(discount or 0)
+                    .replace("%", "")
+                    .strip()
+                )
 
-                    name = str(
-                        name
-                    ).strip()
+                if discount < 0:
+                    discount = Decimal("0")
 
-                    brand_name = str(
-                        brand_name
-                    ).strip()
+                if discount > 100:
+                    raise ValueError(
+                        "Discount cannot exceed 100%"
+                    )
 
-                    category_name = str(
-                        category_name
-                    ).strip()
+                # -----------------------------------------
+                # Amount
+                # -----------------------------------------
 
+                amount = Decimal(
+                    str(amount or 0)
+                )
 
-                    quantity = int(
-                        Decimal(
-                            str(quantity or 0)
+                if amount < 0:
+                    raise ValueError(
+                        "Amount cannot be negative"
+                    )
+
+                # -----------------------------------------
+                # Selling price
+                # -----------------------------------------
+
+                if quantity > 0:
+
+                    selling_price = (
+                        amount /
+                        Decimal(quantity)
+                    )
+
+                else:
+
+                    selling_price = amount
+
+                selling_price = selling_price.quantize(
+                    Decimal("0.01")
+                )
+
+                # -----------------------------------------
+                # Calculate MRP
+                # -----------------------------------------
+
+                if discount > 0:
+
+                    discount_factor = (
+                        Decimal("1")
+                        -
+                        (
+                            discount /
+                            Decimal("100")
                         )
                     )
 
-
-                    if quantity < 0:
+                    if discount_factor <= 0:
                         raise ValueError(
-                            "Quantity cannot be negative"
+                            "Invalid discount value"
                         )
 
-
-                    discount = Decimal(
-                        str(discount or 0)
-                        .replace("%", "")
-                        .strip()
+                    mrp = (
+                        selling_price /
+                        discount_factor
                     )
 
+                else:
 
-                    if discount < 0:
-                        discount = Decimal("0")
+                    mrp = selling_price
 
+                mrp = mrp.quantize(
+                    Decimal("0.01")
+                )
 
-                    if discount > 100:
-                        raise ValueError(
-                            "Discount cannot exceed 100%"
-                        )
+                # -----------------------------------------
+                # Brand
+                # -----------------------------------------
 
+                brand_slug = slugify(
+                    brand_name
+                )
 
-                    amount = Decimal(
-                        str(amount or 0)
-                    )
+                if brand_slug in brand_cache:
 
+                    brand = brand_cache[
+                        brand_slug
+                    ]
 
-                    if amount < 0:
-                        raise ValueError(
-                            "Amount cannot be negative"
-                        )
-
-
-                    # ---------------------------------
-                    # Calculate unit selling price
-                    # ---------------------------------
-
-                    if quantity > 0:
-
-                        selling_price = (
-                            amount
-                            / Decimal(quantity)
-                        )
-
-                    else:
-
-                        selling_price = amount
-
-
-                    selling_price = selling_price.quantize(
-                        Decimal("0.01")
-                    )
-
-
-                    # ---------------------------------
-                    # Reverse calculate MRP
-                    # ---------------------------------
-
-                    if discount > 0:
-
-                        discount_factor = (
-                            Decimal("1")
-                            - (
-                                discount
-                                / Decimal("100")
-                            )
-                        )
-
-                        mrp = (
-                            selling_price
-                            / discount_factor
-                        )
-
-                    else:
-
-                        mrp = selling_price
-
-
-                    mrp = mrp.quantize(
-                        Decimal("0.01")
-                    )
-
-
-                    # ---------------------------------
-                    # Brand
-                    # ---------------------------------
-
-                    brand_slug = slugify(
-                        brand_name
-                    )
+                else:
 
                     brand, _ = Brand.objects.get_or_create(
                         slug=brand_slug,
@@ -513,14 +557,25 @@ def part_import_view(request):
                         }
                     )
 
+                    brand_cache[
+                        brand_slug
+                    ] = brand
 
-                    # ---------------------------------
-                    # Category
-                    # ---------------------------------
+                # -----------------------------------------
+                # Category
+                # -----------------------------------------
 
-                    category_slug = slugify(
-                        category_name
-                    )
+                category_slug = slugify(
+                    category_name
+                )
+
+                if category_slug in category_cache:
+
+                    category = category_cache[
+                        category_slug
+                    ]
+
+                else:
 
                     category, _ = Category.objects.get_or_create(
                         slug=category_slug,
@@ -529,10 +584,15 @@ def part_import_view(request):
                         }
                     )
 
+                    category_cache[
+                        category_slug
+                    ] = category
 
-                    # ---------------------------------
-                    # Create / Update Part
-                    # ---------------------------------
+                # -----------------------------------------
+                # Create / Update Part
+                # -----------------------------------------
+
+                with transaction.atomic():
 
                     part, created = (
                         Part.objects.update_or_create(
@@ -540,58 +600,76 @@ def part_import_view(request):
                             part_number=part_number,
 
                             defaults={
-
                                 "name": name,
-
                                 "brand": brand,
-
                                 "category": category,
-
                                 "description": "",
-
                                 "compatible_with": "",
-
                                 "quantity": quantity,
-
                                 "mrp": mrp,
-
                                 "discount": discount,
-
                                 "is_featured": False,
-
                                 "is_active": True,
                             }
                         )
                     )
 
-
-                    # Part.save() calculates price
+                    # Keep this because your model's save()
+                    # apparently calculates the price.
                     part.save()
 
+                # -----------------------------------------
+                # Counters
+                # -----------------------------------------
 
-                    if created:
+                if created:
 
-                        created_count += 1
+                    created_count += 1
 
-                    else:
+                else:
 
-                        updated_count += 1
+                    updated_count += 1
 
+            except (
+                ValueError,
+                InvalidOperation,
+                TypeError
+            ) as e:
 
-                except (
-                    ValueError,
-                    InvalidOperation,
-                    TypeError
-                ) as e:
+                skipped_count += 1
 
-                    skipped_count += 1
+                # Only retain first 50 errors
+                # to prevent memory growth.
+                if len(errors) < 50:
 
                     errors.append(
                         f"Row {row_number}: {str(e)}"
                     )
 
+            except Exception as e:
+
+                skipped_count += 1
+
+                if len(errors) < 50:
+
+                    errors.append(
+                        f"Row {row_number}: {str(e)}"
+                    )
+
+        # -----------------------------------------
+        # Close workbook
+        # -----------------------------------------
+
+        workbook.close()
+        workbook = None
 
     except Exception as e:
+
+        if workbook is not None:
+            try:
+                workbook.close()
+            except Exception:
+                pass
 
         messages.error(
             request,
@@ -602,6 +680,9 @@ def part_import_view(request):
             "dashboard:part_list"
         )
 
+    # -----------------------------------------
+    # Success message
+    # -----------------------------------------
 
     messages.success(
         request,
@@ -613,19 +694,16 @@ def part_import_view(request):
         )
     )
 
-
     if errors:
 
         messages.warning(
             request,
-            " | ".join(errors[:10])
+            " | ".join(errors)
         )
-
 
     return redirect(
         "dashboard:part_list"
     )
-
 from django.core.paginator import Paginator
 @admin_required
 def part_list_view(request):
