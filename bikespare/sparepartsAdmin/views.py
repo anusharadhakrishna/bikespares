@@ -238,29 +238,44 @@ import os
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
-from django.db import transaction
 from django.shortcuts import redirect
 from django.utils.text import slugify
 
 from openpyxl import load_workbook
 
 from inventory.models import Part, Brand, Category
-# from .utils import clean_part_number  # adjust if your function is elsewhere
 
 
 @admin_required
 def part_import_view(request):
 
+    # --------------------------------------------------
+    # Only POST is allowed
+    # --------------------------------------------------
+
     if request.method != "POST":
         return redirect("dashboard:part_list")
+
+    # --------------------------------------------------
+    # Get uploaded Excel file
+    # --------------------------------------------------
 
     excel_file = request.FILES.get("file")
 
     if not excel_file:
-        messages.error(request, "Please select an Excel file.")
+        messages.error(
+            request,
+            "Please select an Excel file."
+        )
         return redirect("dashboard:part_list")
 
-    extension = os.path.splitext(excel_file.name)[1].lower()
+    # --------------------------------------------------
+    # Validate extension
+    # --------------------------------------------------
+
+    extension = os.path.splitext(
+        excel_file.name
+    )[1].lower()
 
     if extension not in [".xlsx", ".xlsm"]:
         messages.error(
@@ -272,20 +287,23 @@ def part_import_view(request):
     workbook = None
 
     try:
+
+        # ==================================================
         # IMPORTANT:
-        # read_only=True prevents the entire Excel workbook
-        # from being loaded into memory.
+        # read_only=True significantly reduces memory usage
+        # ==================================================
+
         workbook = load_workbook(
             excel_file,
             read_only=True,
-            data_only=True,
+            data_only=True
         )
 
         worksheet = workbook.active
 
-        # -----------------------------------------
-        # Read header row
-        # -----------------------------------------
+        # --------------------------------------------------
+        # Read first row / headers
+        # --------------------------------------------------
 
         header_row = next(
             worksheet.iter_rows(
@@ -297,11 +315,15 @@ def part_import_view(request):
         )
 
         if not header_row:
+
             messages.error(
                 request,
                 "The Excel file is empty."
             )
-            return redirect("dashboard:part_list")
+
+            return redirect(
+                "dashboard:part_list"
+            )
 
         headers = [
             str(value).strip()
@@ -309,6 +331,10 @@ def part_import_view(request):
             else ""
             for value in header_row
         ]
+
+        # --------------------------------------------------
+        # Required columns
+        # --------------------------------------------------
 
         required_columns = [
             "Part Number",
@@ -327,34 +353,49 @@ def part_import_view(request):
         ]
 
         if missing_columns:
+
             messages.error(
                 request,
-                "Missing columns: " + ", ".join(missing_columns)
+                "Missing columns: "
+                + ", ".join(missing_columns)
             )
-            return redirect("dashboard:part_list")
+
+            return redirect(
+                "dashboard:part_list"
+            )
+
+        # --------------------------------------------------
+        # Header -> index
+        # --------------------------------------------------
 
         column_index = {
             header: index
             for index, header in enumerate(headers)
         }
 
+        # --------------------------------------------------
+        # Counters
+        # --------------------------------------------------
+
         created_count = 0
         updated_count = 0
         skipped_count = 0
 
-        # Don't allow thousands of errors to accumulate in memory.
+        # Keep only first 50 errors.
+        # This prevents a huge Excel file from
+        # consuming memory because of error messages.
         errors = []
 
-        # -----------------------------------------
-        # Cache Brand and Category objects
-        # -----------------------------------------
+        # --------------------------------------------------
+        # Caches
+        # --------------------------------------------------
 
         brand_cache = {}
         category_cache = {}
 
-        # -----------------------------------------
-        # Process Excel row by row
-        # -----------------------------------------
+        # ==================================================
+        # PROCESS ROW BY ROW
+        # ==================================================
 
         for row_number, row in enumerate(
             worksheet.iter_rows(
@@ -365,6 +406,10 @@ def part_import_view(request):
         ):
 
             try:
+
+                # --------------------------------------------------
+                # Extract values
+                # --------------------------------------------------
 
                 part_number = row[
                     column_index["Part Number"]
@@ -394,9 +439,9 @@ def part_import_view(request):
                     column_index["Amount"]
                 ]
 
-                # -----------------------------------------
-                # Required fields
-                # -----------------------------------------
+                # --------------------------------------------------
+                # Required validation
+                # --------------------------------------------------
 
                 if not part_number:
                     raise ValueError(
@@ -418,9 +463,9 @@ def part_import_view(request):
                         "Category is empty"
                     )
 
-                # -----------------------------------------
-                # Clean strings
-                # -----------------------------------------
+                # --------------------------------------------------
+                # Clean values
+                # --------------------------------------------------
 
                 part_number = clean_part_number(
                     part_number
@@ -436,9 +481,9 @@ def part_import_view(request):
                     category_name
                 ).strip()
 
-                # -----------------------------------------
+                # --------------------------------------------------
                 # Quantity
-                # -----------------------------------------
+                # --------------------------------------------------
 
                 quantity = int(
                     Decimal(
@@ -447,13 +492,14 @@ def part_import_view(request):
                 )
 
                 if quantity < 0:
+
                     raise ValueError(
                         "Quantity cannot be negative"
                     )
 
-                # -----------------------------------------
+                # --------------------------------------------------
                 # Discount
-                # -----------------------------------------
+                # --------------------------------------------------
 
                 discount = Decimal(
                     str(discount or 0)
@@ -462,29 +508,32 @@ def part_import_view(request):
                 )
 
                 if discount < 0:
+
                     discount = Decimal("0")
 
                 if discount > 100:
+
                     raise ValueError(
                         "Discount cannot exceed 100%"
                     )
 
-                # -----------------------------------------
+                # --------------------------------------------------
                 # Amount
-                # -----------------------------------------
+                # --------------------------------------------------
 
                 amount = Decimal(
                     str(amount or 0)
                 )
 
                 if amount < 0:
+
                     raise ValueError(
                         "Amount cannot be negative"
                     )
 
-                # -----------------------------------------
-                # Selling price
-                # -----------------------------------------
+                # --------------------------------------------------
+                # Calculate selling price
+                # --------------------------------------------------
 
                 if quantity > 0:
 
@@ -501,9 +550,9 @@ def part_import_view(request):
                     Decimal("0.01")
                 )
 
-                # -----------------------------------------
+                # --------------------------------------------------
                 # Calculate MRP
-                # -----------------------------------------
+                # --------------------------------------------------
 
                 if discount > 0:
 
@@ -517,6 +566,7 @@ def part_import_view(request):
                     )
 
                     if discount_factor <= 0:
+
                         raise ValueError(
                             "Invalid discount value"
                         )
@@ -534,9 +584,9 @@ def part_import_view(request):
                     Decimal("0.01")
                 )
 
-                # -----------------------------------------
-                # Brand
-                # -----------------------------------------
+                # ==================================================
+                # BRAND
+                # ==================================================
 
                 brand_slug = slugify(
                     brand_name
@@ -550,20 +600,22 @@ def part_import_view(request):
 
                 else:
 
-                    brand, _ = Brand.objects.get_or_create(
-                        slug=brand_slug,
-                        defaults={
-                            "name": brand_name
-                        }
+                    brand, _ = (
+                        Brand.objects.get_or_create(
+                            slug=brand_slug,
+                            defaults={
+                                "name": brand_name
+                            }
+                        )
                     )
 
                     brand_cache[
                         brand_slug
                     ] = brand
 
-                # -----------------------------------------
-                # Category
-                # -----------------------------------------
+                # ==================================================
+                # CATEGORY
+                # ==================================================
 
                 category_slug = slugify(
                     category_name
@@ -577,50 +629,64 @@ def part_import_view(request):
 
                 else:
 
-                    category, _ = Category.objects.get_or_create(
-                        slug=category_slug,
-                        defaults={
-                            "name": category_name
-                        }
+                    category, _ = (
+                        Category.objects.get_or_create(
+                            slug=category_slug,
+                            defaults={
+                                "name": category_name
+                            }
+                        )
                     )
 
                     category_cache[
                         category_slug
                     ] = category
 
-                # -----------------------------------------
-                # Create / Update Part
-                # -----------------------------------------
+                # ==================================================
+                # CREATE / UPDATE PART
+                # ==================================================
 
-                with transaction.atomic():
+                part, created = (
+                    Part.objects.update_or_create(
 
-                    part, created = (
-                        Part.objects.update_or_create(
+                        part_number=part_number,
 
-                            part_number=part_number,
+                        defaults={
 
-                            defaults={
-                                "name": name,
-                                "brand": brand,
-                                "category": category,
-                                "description": "",
-                                "compatible_with": "",
-                                "quantity": quantity,
-                                "mrp": mrp,
-                                "discount": discount,
-                                "is_featured": False,
-                                "is_active": True,
-                            }
-                        )
+                            "name": name,
+
+                            "brand": brand,
+
+                            "category": category,
+
+                            "description": "",
+
+                            "compatible_with": "",
+
+                            "quantity": quantity,
+
+                            "mrp": mrp,
+
+                            "discount": discount,
+
+                            "is_featured": False,
+
+                            "is_active": True,
+                        }
                     )
+                )
 
-                    # Keep this because your model's save()
-                    # apparently calculates the price.
-                    part.save()
+                # --------------------------------------------------
+                # Your Part model has custom save() price calculation
+                # --------------------------------------------------
 
-                # -----------------------------------------
+                part.save(
+                    update_fields=None
+                )
+
+                # --------------------------------------------------
                 # Counters
-                # -----------------------------------------
+                # --------------------------------------------------
 
                 if created:
 
@@ -630,6 +696,10 @@ def part_import_view(request):
 
                     updated_count += 1
 
+            # ==================================================
+            # ROW VALIDATION ERRORS
+            # ==================================================
+
             except (
                 ValueError,
                 InvalidOperation,
@@ -638,13 +708,15 @@ def part_import_view(request):
 
                 skipped_count += 1
 
-                # Only retain first 50 errors
-                # to prevent memory growth.
                 if len(errors) < 50:
 
                     errors.append(
                         f"Row {row_number}: {str(e)}"
                     )
+
+            # ==================================================
+            # OTHER ROW ERRORS
+            # ==================================================
 
             except Exception as e:
 
@@ -656,16 +728,22 @@ def part_import_view(request):
                         f"Row {row_number}: {str(e)}"
                     )
 
-        # -----------------------------------------
-        # Close workbook
-        # -----------------------------------------
+        # --------------------------------------------------
+        # Close Excel workbook
+        # --------------------------------------------------
 
         workbook.close()
+
         workbook = None
 
     except Exception as e:
 
+        # --------------------------------------------------
+        # Close workbook if something failed
+        # --------------------------------------------------
+
         if workbook is not None:
+
             try:
                 workbook.close()
             except Exception:
@@ -680,12 +758,13 @@ def part_import_view(request):
             "dashboard:part_list"
         )
 
-    # -----------------------------------------
-    # Success message
-    # -----------------------------------------
+    # ==================================================
+    # SUCCESS MESSAGE
+    # ==================================================
 
     messages.success(
         request,
+
         (
             f"Import completed successfully. "
             f"Created: {created_count}, "
@@ -694,10 +773,15 @@ def part_import_view(request):
         )
     )
 
+    # --------------------------------------------------
+    # Show errors
+    # --------------------------------------------------
+
     if errors:
 
         messages.warning(
             request,
+
             " | ".join(errors)
         )
 
